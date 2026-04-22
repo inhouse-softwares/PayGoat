@@ -36,11 +36,6 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(payUrl);
   }
 
-  if (hasSession && role === "admin" && pathname.startsWith("/pay/")) {
-    const payUrl = new URL("/pay", request.url);
-    return NextResponse.redirect(payUrl);
-  }
-
   if (pathname === "/login" && hasSession) {
     const redirectUrl = new URL(role === "admin" ? "/dashboard" : "/pay", request.url);
     return NextResponse.redirect(redirectUrl);

@@ -1,14 +1,39 @@
+"use client"
 import Link from "next/link";
 import { loginAction } from "../actions/auth";
 import { ThemeToggle } from "../components/theme-toggle";
+import { useState } from "react";
+import { redirect } from "next/navigation";
+import { Sign } from "crypto";
 
-type LoginPageProps = {
-  searchParams: Promise<{ error?: string }>;
-};
+export default function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const params = await searchParams;
-  const hasInvalidCredentials = params.error === "invalid_credentials";
+  async function handleLogin(e: any) {
+    e.preventDefault();
+    setIsSubmitting(true);
+    const loginData = {
+      email,
+      password,
+    };
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(loginData),
+    });
+    
+    if (!response.ok) {
+      console.log("Login failed");
+      return;
+    }
+    
+    const data = await response.json();
+    redirect(data.role === "admin" ? "/dashboard" : "/pay");
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4" style={{ background: "var(--page-bg)" }}>
@@ -30,7 +55,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           Sign in to manage payments, settlements, and logs.
         </p>
 
-        <form action={loginAction} className="mt-6 space-y-4">
+        <form onSubmit={(e) => handleLogin(e)} className="mt-6 space-y-4">
           <div>
             <label htmlFor="email" className="mb-1 block text-sm font-medium text-[var(--foreground)]">
               Email
@@ -39,9 +64,11 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               id="email"
               name="email"
               type="email"
-              placeholder="admin@paygoat.local"
+              placeholder="admin@paygoat.com"
               className="h-11 w-full rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] px-4 text-sm text-[var(--foreground)] outline-none transition focus:border-[var(--accent)]"
               required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
           </div>
 
@@ -56,28 +83,31 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               placeholder="Enter your password"
               className="h-11 w-full rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] px-4 text-sm text-[var(--foreground)] outline-none transition focus:border-[var(--accent)]"
               required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
             />
           </div>
 
-          {hasInvalidCredentials ? (
+          {/* {hasInvalidCredentials ? (
             <p className="rounded-lg border border-[#f2c7c7] bg-[#fde8e8] px-3 py-2 text-sm text-[#a12a2a]">
               Invalid email or password.
             </p>
-          ) : null}
+          ) : null} */}
 
           <button
             type="submit"
-            className="h-11 w-full rounded-xl bg-[var(--accent)] text-sm font-semibold text-white transition hover:brightness-95"
+            className={`h-11 w-full rounded-xl bg-[var(--accent)] text-sm font-semibold text-white transition hover:brightness-95 ${isSubmitting ? "cursor-not-allowed opacity-50" : ""}`}
+            disabled={isSubmitting}
           >
-            Sign In
+            {isSubmitting ? "Signing In..." : "Sign In"}
           </button>
         </form>
 
         <p className="mt-4 text-xs text-[var(--muted-foreground)]">
-          Admin: <span className="font-mono">admin@paygoat.local / password123</span>
+          Admin: <span className="font-mono">admin@paygoat.com / admin123</span>
         </p>
         <p className="mt-2 text-xs text-[var(--muted-foreground)]">
-          Operator: <span className="font-mono">operator@paygoat.local / operator123</span>
+          Operator: <span className="font-mono">operator@paygoat.com / operator123</span>
         </p>
         <p className="mt-2 text-xs text-[var(--muted-foreground)]">
           Override via <span className="font-mono">ADMIN_EMAIL</span>,{" "}

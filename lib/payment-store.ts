@@ -1,9 +1,39 @@
+export type PaymentEntity = {
+  name: string;
+  percentage: number;
+  businessName?: string;
+  accountNumber?: string;
+  bankCode?: string;
+  paystackSubaccountCode?: string;
+};
+
+export type PaymentType = {
+  id: string;
+  instanceId: string;
+  name: string;
+  description?: string;
+  amount: number;
+};
+
+export type FormFieldType = "text" | "number" | "date" | "select";
+
+export type FormField = {
+  key: string;
+  label: string;
+  type: FormFieldType;
+  required: boolean;
+  options?: string[]; // for select type
+};
+
 export type PaymentInstance = {
   id: string;
   name: string;
   splitCode: string;
   idclPercent: number;
   summary: string;
+  entities: PaymentEntity[];
+  formFields: FormField[];
+  paymentTypes?: PaymentType[];
 };
 
 export type PaymentCollection = {
@@ -11,39 +41,21 @@ export type PaymentCollection = {
   instanceId: string;
   instanceName: string;
   splitCode: string;
+  paymentTypeId?: string;
+  paymentType?: string;
   payer: string;
   amount: number;
   idclAmount: number;
   motAmount: number;
+  metadata: Record<string, string>;
+  paystackReference?: string;
   collectedAt: string;
 };
 
 export const PAYMENT_INSTANCES_STORAGE_KEY = "paygoat-payment-instances";
 export const PAYMENT_COLLECTIONS_STORAGE_KEY = "paygoat-payment-collections";
 
-export const defaultPaymentInstances: PaymentInstance[] = [
-  {
-    id: "transport",
-    name: "Transport",
-    splitCode: "TRN-35",
-    idclPercent: 35,
-    summary: "Collect transport-related fees using the configured IDCL and MOT split.",
-  },
-  {
-    id: "licensing",
-    name: "Licensing",
-    splitCode: "LIC-30",
-    idclPercent: 30,
-    summary: "Handle license issuance and renewal payments under one split code.",
-  },
-  {
-    id: "inspection",
-    name: "Inspection",
-    splitCode: "INSP-40",
-    idclPercent: 40,
-    summary: "Capture inspection and compliance payments with automatic revenue split.",
-  },
-];
+export const defaultPaymentInstances: PaymentInstance[] = [];
 
 function safeParse<T>(value: string | null, fallback: T): T {
   if (!value) {

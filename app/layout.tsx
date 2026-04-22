@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { IBM_Plex_Mono, Manrope } from "next/font/google";
 import { PortalChrome } from "./components/portal-chrome";
 import { getSessionRole } from "@/lib/auth";
+import { StoreProvider } from "@/lib/store/StoreProvider";
 import "./globals.css";
+import NextTopLoader from "nextjs-toploader";
 
 const manrope = Manrope({
   variable: "--font-manrope",
@@ -32,7 +34,10 @@ export default async function RootLayout({
       <body
         className={`${manrope.variable} ${ibmPlexMono.variable} antialiased`}
       >
-        <PortalChrome role={role}>{children}</PortalChrome>
+        <StoreProvider>
+          <NextTopLoader />
+          <PortalChrome role={role}>{children}</PortalChrome>
+        </StoreProvider>
       </body>
     </html>
   );

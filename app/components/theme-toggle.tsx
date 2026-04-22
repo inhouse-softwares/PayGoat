@@ -33,7 +33,7 @@ export function ThemeToggle() {
     <button
       type="button"
       onClick={toggleTheme}
-      className="inline-flex h-10 items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--muted-foreground)] transition hover:bg-[var(--surface-soft)]"
+      className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--muted-foreground)] transition hover:bg-[var(--surface-soft)]"
       aria-label="Toggle color mode"
     >
       <SunMoon size={16} />

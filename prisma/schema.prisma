@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  role      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("users")
+}
+
+model PaymentInstance {
+  id          String   @id @default(cuid())
+  name        String
+  splitCode   String   @unique
+  idclPercent Float
+  summary     String
+  entities    Json
+  formFields  Json     @default("[]")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  collections  PaymentCollection[]
+  paymentTypes PaymentType[]
+  
+  @@map("payment_instances")
+}
+
+model PaymentType {
+  id          String          @id @default(cuid())
+  instanceId  String
+  name        String
+  description String?
+  amount      Float
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  
+  instance    PaymentInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  
+  @@map("payment_types")
+  @@index([instanceId])
+}
+
+model PaymentCollection {
+  id                 String   @id @default(cuid())
+  instanceId         String
+  instanceName       String
+  splitCode          String
+  paymentTypeId      String?
+  paymentType        String?
+  payer              String
+  amount             Float
+  idclAmount         Float
+  motAmount          Float
+  metadata           Json     @default("{}")
+  paystackReference  String?  @unique
+  collectedAt        String
+  createdAt          DateTime @default(now())
+  
+  instance       PaymentInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  
+  @@map("payment_collections")
+  @@index([instanceId])
+  @@index([paymentTypeId])
+}

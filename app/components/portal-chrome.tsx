@@ -4,11 +4,15 @@ import { usePathname } from "next/navigation";
 import { PortalHeader } from "./portal-header";
 import type { UserRole } from "@/lib/auth-types";
 
-type PortalRoute = "/dashboard" | "/pay" | "/logs";
+type PortalRoute = "/dashboard" | "/pay" | "/pay/configure" | "/logs";
 
 function getPortalRoute(pathname: string): PortalRoute | null {
   if (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) {
     return "/dashboard";
+  }
+
+  if (pathname === "/pay/configure" || pathname.startsWith("/pay/configure/")) {
+    return "/pay/configure";
   }
 
   if (pathname === "/pay" || pathname.startsWith("/pay/")) {
