@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import type { UserRole } from "@/lib/auth-types";
+import Image from "next/image";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -47,7 +48,7 @@ export default function LoginPage() {
         </div>
 
         <div className="mb-6 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-[var(--accent)]" />
+          <Image src="/logo.svg" alt="PayGoat" width={40} height={40} className="w-10"/>
           <div>
             <p className="text-lg font-semibold text-[var(--foreground)]">Paygoat</p>
             <p className="text-xs text-[var(--muted-foreground)]">Payment collections, simplified.</p>
