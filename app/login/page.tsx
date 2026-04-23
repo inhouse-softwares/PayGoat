@@ -48,7 +48,7 @@ export default function LoginPage() {
         </div>
 
         <div className="mb-6 flex items-center gap-3">
-          <Image src="/logo.svg" alt="PayGoat" width={40} height={40} className="w-10"/>
+          <Image src="/logo.svg" alt="PayGoat" width={40} height={40} className="w-full object-cover"/>
           <div>
             <p className="text-lg font-semibold text-[var(--foreground)]">Paygoat</p>
             <p className="text-xs text-[var(--muted-foreground)]">Payment collections, simplified.</p>
