@@ -20,7 +20,7 @@ interface PaystackOptions {
 }
 
 interface Window {
-  PaystackPop: {
+  PaystackPop: new () => {
     newTransaction: (options: PaystackOptions) => void;
   };
 }

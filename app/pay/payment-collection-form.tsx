@@ -81,7 +81,7 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
         throw new Error(err.error || "Failed to initialize payment");
       }
 
-      window.PaystackPop.newTransaction({
+      new window.PaystackPop().newTransaction({
         key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY!,
         email: payerEmail.trim(),
         amount: Math.round(amount * 100),
@@ -340,7 +340,7 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
           <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3">
             <p className="text-xs uppercase tracking-[0.12em] text-[var(--muted-foreground)]">Total Collected</p>
             <p className="mt-1 text-2xl font-semibold text-[var(--foreground)]">
-              ${collections.filter((c) => c.instanceId === instanceId).reduce((sum, c) => sum + c.amount, 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              N{collections.filter((c) => c.instanceId === instanceId).reduce((sum, c) => sum + c.amount, 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
           </div>
         </div>
@@ -366,9 +366,9 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
                 instanceCollections.map((collection) => (
                   <tr key={collection.id} className="border-t border-[var(--border)] text-[var(--foreground)]">
                     <td className="px-3 py-3 font-medium">{collection.payer}</td>
-                    <td className="px-3 py-3">${collection.amount.toFixed(2)}</td>
-                    <td className="px-3 py-3 text-[var(--success)]">${collection.idclAmount.toFixed(2)}</td>
-                    <td className="px-3 py-3">${collection.motAmount.toFixed(2)}</td>
+                    <td className="px-3 py-3">N{collection.amount.toFixed(2)}</td>
+                    <td className="px-3 py-3 text-[var(--success)]">N{collection.idclAmount.toFixed(2)}</td>
+                    <td className="px-3 py-3">N{collection.motAmount.toFixed(2)}</td>
                     <td className="px-3 py-3 text-[var(--muted-foreground)]">{collection.collectedAt}</td>
                   </tr>
                 ))

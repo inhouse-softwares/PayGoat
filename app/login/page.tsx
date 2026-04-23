@@ -1,38 +1,42 @@
 "use client"
 import Link from "next/link";
-import { loginAction } from "../actions/auth";
 import { ThemeToggle } from "../components/theme-toggle";
 import { useState } from "react";
-import { redirect } from "next/navigation";
-import { Sign } from "crypto";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
+import type { UserRole } from "@/lib/auth-types";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  async function handleLogin(e: any) {
+  const { setRole } = useAuth();
+  const router = useRouter();
+
+  async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setIsSubmitting(true);
-    const loginData = {
-      email,
-      password,
-    };
+    setError("");
+
     const response = await fetch("/api/auth/login", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(loginData),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
     });
-    
+
     if (!response.ok) {
-      console.log("Login failed");
+      setError("Invalid email or password.");
+      setIsSubmitting(false);
       return;
     }
-    
+
     const data = await response.json();
-    redirect(data.role === "admin" ? "/dashboard" : "/pay");
+
+    // Update context BEFORE navigating so PortalChrome has the role immediately
+    setRole(data.role as UserRole);
+    router.push(data.role === "admin" ? "/dashboard" : "/pay");
   }
 
   return (
@@ -55,7 +59,7 @@ export default function LoginPage() {
           Sign in to manage payments, settlements, and logs.
         </p>
 
-        <form onSubmit={(e) => handleLogin(e)} className="mt-6 space-y-4">
+        <form onSubmit={handleLogin} className="mt-6 space-y-4">
           <div>
             <label htmlFor="email" className="mb-1 block text-sm font-medium text-[var(--foreground)]">
               Email
@@ -93,6 +97,12 @@ export default function LoginPage() {
               Invalid email or password.
             </p>
           ) : null} */}
+
+          {error && (
+            <p className="rounded-lg border border-[var(--danger)] bg-[var(--danger)]/10 px-3 py-2 text-sm text-[var(--danger)]">
+              {error}
+            </p>
+          )}
 
           <button
             type="submit"

@@ -26,6 +26,10 @@ export function middleware(request: NextRequest) {
   const role = getRole(request.cookies.get(AUTH_COOKIE_NAME)?.value);
   const hasSession = role !== null;
 
+  // Forward pathname as a request header so server components can read it via headers()
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-pathname", pathname);
+
   if (isProtectedPath(pathname) && !hasSession) {
     const loginUrl = new URL("/login", request.url);
     return NextResponse.redirect(loginUrl);
@@ -41,7 +45,9 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  return NextResponse.next();
+  return NextResponse.next({
+    request: { headers: requestHeaders },
+  });
 }
 
 export const config = {
