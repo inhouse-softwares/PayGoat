@@ -113,18 +113,6 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="mt-4 text-xs text-[var(--muted-foreground)]">
-          Admin: <span className="font-mono">admin@paygoat.com / admin123</span>
-        </p>
-        <p className="mt-2 text-xs text-[var(--muted-foreground)]">
-          Operator: <span className="font-mono">operator@paygoat.com / operator123</span>
-        </p>
-        <p className="mt-2 text-xs text-[var(--muted-foreground)]">
-          Override via <span className="font-mono">ADMIN_EMAIL</span>,{" "}
-          <span className="font-mono">ADMIN_PASSWORD</span>, <span className="font-mono">OPERATOR_EMAIL</span>, and{" "}
-          <span className="font-mono">OPERATOR_PASSWORD</span>.
-        </p>
-
         <p className="mt-5 text-xs text-[var(--muted-foreground)]">
           Need access? Contact your system administrator or return to{" "}
           <Link href="/" className="font-medium text-[var(--accent)]">
