@@ -49,8 +49,8 @@ export default function LoginPage() {
         <div className="mb-6 flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-[var(--accent)]" />
           <div>
-            <p className="text-lg font-semibold text-[var(--foreground)]">PayGoat Portal</p>
-            <p className="text-xs text-[var(--muted-foreground)]">Admin or operator sign in</p>
+            <p className="text-lg font-semibold text-[var(--foreground)]">Paygoat</p>
+            <p className="text-xs text-[var(--muted-foreground)]">Payment collections, simplified.</p>
           </div>
         </div>
 
