@@ -12,7 +12,7 @@ export const instancesApi = baseApi.injectEndpoints({
       providesTags: (result, error, id) => [{ type: "PaymentInstance", id }],
     }),
     createInstance: builder.mutation<
-      PaymentInstance,
+      PaymentInstance & { operatorEmail?: string; operatorPassword?: string },
       Omit<PaymentInstance, "id" | "splitCode" | "createdAt" | "updatedAt"> & { splitCode?: string }
     >({
       query: (body) => ({
@@ -24,7 +24,15 @@ export const instancesApi = baseApi.injectEndpoints({
     }),
     updateInstance: builder.mutation<
       PaymentInstance,
-      { id: string; data: Partial<PaymentInstance> }
+      {
+        id: string;
+        data: {
+          name?: string;
+          summary?: string;
+          formFields?: PaymentInstance["formFields"];
+          paymentTypes?: Array<{ id?: string; name: string; description?: string; amount: number }>;
+        };
+      }
     >({
       query: ({ id, data }) => ({
         url: `/instances/${id}`,

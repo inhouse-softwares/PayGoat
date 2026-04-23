@@ -38,9 +38,9 @@ export function DashboardClient() {
       </div>
 
       {/* Grand total banner */}
-      <section className="rounded-2xl bg-blue-700 px-5 py-5 text-white">
+      <section className="rounded-2xl bg-blue-700 px-4 py-5 text-white sm:px-6">
         <p className="text-sm text-white/80">Total Collected (All Instances)</p>
-        <p className="mt-1 text-4xl font-semibold tracking-tight">
+        <p className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">
           ₦{totalCollected.toLocaleString("en-NG", { minimumFractionDigits: 2 })}
         </p>
         <p className="mt-2 text-sm text-white/80">

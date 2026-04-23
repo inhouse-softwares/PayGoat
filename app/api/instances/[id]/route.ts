@@ -17,6 +17,9 @@ export async function GET(
         collections: {
           orderBy: { createdAt: "desc" },
         },
+        operator: {
+          select: { email: true },
+        },
       },
     });
 
@@ -44,6 +47,8 @@ export async function DELETE(
   try {
     const { id } = await params;
 
+    // Delete the linked operator account first (SetNull on schema, but explicit is safer)
+    await prisma.user.deleteMany({ where: { instanceId: id } });
     await prisma.paymentInstance.delete({
       where: { id },
     });
@@ -65,17 +70,56 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { name, splitCode, idclPercent, summary, entities } = body;
+    const { name, summary, formFields, paymentTypes } = body;
 
-    const instance = await prisma.paymentInstance.update({
-      where: { id },
-      data: {
-        ...(name && { name }),
-        ...(splitCode && { splitCode }),
-        ...(idclPercent && { idclPercent: parseFloat(idclPercent) }),
-        ...(summary && { summary }),
-        ...(entities && { entities }),
-      },
+    const instance = await prisma.$transaction(async (tx) => {
+      // 1. Update scalar fields on the instance
+      const updated = await tx.paymentInstance.update({
+        where: { id },
+        data: {
+          ...(name !== undefined && { name }),
+          ...(summary !== undefined && { summary }),
+          ...(formFields !== undefined && { formFields }),
+        },
+      });
+
+      // 2. Sync payment types if provided
+      if (Array.isArray(paymentTypes)) {
+        const incomingIds = paymentTypes.filter((pt) => pt.id).map((pt) => pt.id as string);
+
+        // Delete types no longer in the list
+        await tx.paymentType.deleteMany({
+          where: { instanceId: id, id: { notIn: incomingIds } },
+        });
+
+        // Upsert each type
+        for (const pt of paymentTypes) {
+          if (pt.id) {
+            await tx.paymentType.update({
+              where: { id: pt.id },
+              data: {
+                name: pt.name,
+                description: pt.description || null,
+                amount: Number(pt.amount),
+              },
+            });
+          } else {
+            await tx.paymentType.create({
+              data: {
+                instanceId: id,
+                name: pt.name,
+                description: pt.description || null,
+                amount: Number(pt.amount),
+              },
+            });
+          }
+        }
+      }
+
+      return tx.paymentInstance.findUnique({
+        where: { id },
+        include: { paymentTypes: { orderBy: { createdAt: "asc" } } },
+      });
     });
 
     return NextResponse.json(instance);

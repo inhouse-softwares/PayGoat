@@ -8,13 +8,18 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  role      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  plainPassword String?
+  role          String
+  instanceId    String?   @unique
+  lastLoginAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  instance    PaymentInstance? @relation(fields: [instanceId], references: [id], onDelete: SetNull)
+
   @@map("users")
 }
 
@@ -31,18 +36,21 @@ model PaymentInstance {
   
   collections  PaymentCollection[]
   paymentTypes PaymentType[]
+  operator     User?
   
   @@map("payment_instances")
 }
 
 model PaymentType {
-  id          String          @id @default(cuid())
-  instanceId  String
-  name        String
-  description String?
-  amount      Float
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
+  id            String          @id @default(cuid())
+  instanceId    String
+  name          String
+  description   String?
+  amount        Float
+  splitCode     String?
+  splitEntities Json            @default("[]")
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
   
   instance    PaymentInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   
@@ -59,6 +67,7 @@ model PaymentCollection {
   paymentType        String?
   payer              String
   amount             Float
+  quantity           Int      @default(1)
   idclAmount         Float
   motAmount          Float
   metadata           Json     @default("{}")

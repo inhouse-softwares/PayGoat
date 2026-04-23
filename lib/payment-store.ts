@@ -13,6 +13,8 @@ export type PaymentType = {
   name: string;
   description?: string;
   amount: number;
+  splitCode?: string;
+  splitEntities?: PaymentEntity[];
 };
 
 export type FormFieldType = "text" | "number" | "date" | "select";
@@ -45,6 +47,7 @@ export type PaymentCollection = {
   paymentType?: string;
   payer: string;
   amount: number;
+  quantity?: number;
   idclAmount: number;
   motAmount: number;
   metadata: Record<string, string>;

@@ -124,7 +124,10 @@ exports.Prisma.UserScalarFieldEnum = {
   id: 'id',
   email: 'email',
   password: 'password',
+  plainPassword: 'plainPassword',
   role: 'role',
+  instanceId: 'instanceId',
+  lastLoginAt: 'lastLoginAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -147,6 +150,8 @@ exports.Prisma.PaymentTypeScalarFieldEnum = {
   name: 'name',
   description: 'description',
   amount: 'amount',
+  splitCode: 'splitCode',
+  splitEntities: 'splitEntities',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -160,6 +165,7 @@ exports.Prisma.PaymentCollectionScalarFieldEnum = {
   paymentType: 'paymentType',
   payer: 'payer',
   amount: 'amount',
+  quantity: 'quantity',
   idclAmount: 'idclAmount',
   motAmount: 'motAmount',
   metadata: 'metadata',
@@ -182,15 +188,15 @@ exports.Prisma.QueryMode = {
   insensitive: 'insensitive'
 };
 
+exports.Prisma.NullsOrder = {
+  first: 'first',
+  last: 'last'
+};
+
 exports.Prisma.JsonNullValueFilter = {
   DbNull: Prisma.DbNull,
   JsonNull: Prisma.JsonNull,
   AnyNull: Prisma.AnyNull
-};
-
-exports.Prisma.NullsOrder = {
-  first: 'first',
-  last: 'last'
 };
 
 

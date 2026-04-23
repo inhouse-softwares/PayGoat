@@ -36,7 +36,10 @@ export async function POST(request: NextRequest) {
     }
 
     const cookieStore = await cookies();
-    cookieStore.set("paygoat_session", user.role, {
+    const cookieValue = user.role === "operator" && user.instanceId
+      ? `operator|${user.instanceId}`
+      : user.role;
+    cookieStore.set("paygoat_session", cookieValue, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -44,9 +47,20 @@ export async function POST(request: NextRequest) {
       path: "/",
     });
 
+    // Record last login time — non-fatal: don't let this block the login response
+    try {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { lastLoginAt: new Date() },
+      });
+    } catch (updateErr) {
+      console.error("Failed to update lastLoginAt:", updateErr);
+    }
+
     return NextResponse.json({
       success: true,
       role: user.role,
+      instanceId: user.instanceId ?? null,
     });
   } catch (error) {
     console.error("Login error:", error);

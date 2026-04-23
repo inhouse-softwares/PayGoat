@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { PortalHeader } from "./portal-header";
 import { useAuth } from "@/lib/auth-context";
 
-type PortalRoute = "/dashboard" | "/pay" | "/pay/configure" | "/logs";
+type PortalRoute = "/dashboard" | "/pay" | "/pay/configure" | "/logs" | "/profile" | "/operators";
 
 function getPortalRoute(pathname: string): PortalRoute | null {
   if (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) {
@@ -22,6 +22,14 @@ function getPortalRoute(pathname: string): PortalRoute | null {
 
   if (pathname === "/logs" || pathname.startsWith("/logs/")) {
     return "/logs";
+  }
+
+  if (pathname === "/profile" || pathname.startsWith("/profile/")) {
+    return "/profile";
+  }
+
+  if (pathname === "/operators" || pathname.startsWith("/operators/")) {
+    return "/operators";
   }
 
   return null;

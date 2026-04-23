@@ -37,7 +37,12 @@ export default function LoginPage() {
 
     // Update context BEFORE navigating so PortalChrome has the role immediately
     setRole(data.role as UserRole);
-    router.push(data.role === "admin" ? "/dashboard" : "/pay");
+    if (data.role === "admin") {
+      router.push("/dashboard");
+    } else {
+      // Operator goes directly to their instance's payment page
+      router.push(data.instanceId ? `/pay/${data.instanceId}` : "/pay");
+    }
   }
 
   return (
@@ -48,7 +53,7 @@ export default function LoginPage() {
         </div>
 
         <div className="mb-6 flex items-center gap-3">
-          <Image src="/logo.svg" alt="PayGoat" width={80} height={80} className="object-cover"/>
+          <Image src="/logo.svg" alt="PayGoat" width={80} height={80} className="object-contain"/>
           <div>
             <p className="text-lg font-semibold text-[var(--foreground)]">Paygoat</p>
             <p className="text-xs text-[var(--muted-foreground)]">Payment collections, simplified.</p>

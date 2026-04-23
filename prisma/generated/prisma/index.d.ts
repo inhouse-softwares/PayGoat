@@ -1192,7 +1192,10 @@ export namespace Prisma {
     id: string | null
     email: string | null
     password: string | null
+    plainPassword: string | null
     role: string | null
+    instanceId: string | null
+    lastLoginAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -1201,7 +1204,10 @@ export namespace Prisma {
     id: string | null
     email: string | null
     password: string | null
+    plainPassword: string | null
     role: string | null
+    instanceId: string | null
+    lastLoginAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -1210,7 +1216,10 @@ export namespace Prisma {
     id: number
     email: number
     password: number
+    plainPassword: number
     role: number
+    instanceId: number
+    lastLoginAt: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -1221,7 +1230,10 @@ export namespace Prisma {
     id?: true
     email?: true
     password?: true
+    plainPassword?: true
     role?: true
+    instanceId?: true
+    lastLoginAt?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -1230,7 +1242,10 @@ export namespace Prisma {
     id?: true
     email?: true
     password?: true
+    plainPassword?: true
     role?: true
+    instanceId?: true
+    lastLoginAt?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -1239,7 +1254,10 @@ export namespace Prisma {
     id?: true
     email?: true
     password?: true
+    plainPassword?: true
     role?: true
+    instanceId?: true
+    lastLoginAt?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -1321,7 +1339,10 @@ export namespace Prisma {
     id: string
     email: string
     password: string
+    plainPassword: string | null
     role: string
+    instanceId: string | null
+    lastLoginAt: Date | null
     createdAt: Date
     updatedAt: Date
     _count: UserCountAggregateOutputType | null
@@ -1347,48 +1368,77 @@ export namespace Prisma {
     id?: boolean
     email?: boolean
     password?: boolean
+    plainPassword?: boolean
     role?: boolean
+    instanceId?: boolean
+    lastLoginAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    instance?: boolean | User$instanceArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
   export type UserSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     email?: boolean
     password?: boolean
+    plainPassword?: boolean
     role?: boolean
+    instanceId?: boolean
+    lastLoginAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    instance?: boolean | User$instanceArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
   export type UserSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     email?: boolean
     password?: boolean
+    plainPassword?: boolean
     role?: boolean
+    instanceId?: boolean
+    lastLoginAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    instance?: boolean | User$instanceArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
   export type UserSelectScalar = {
     id?: boolean
     email?: boolean
     password?: boolean
+    plainPassword?: boolean
     role?: boolean
+    instanceId?: boolean
+    lastLoginAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "email" | "password" | "role" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "email" | "password" | "plainPassword" | "role" | "instanceId" | "lastLoginAt" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+  export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    instance?: boolean | User$instanceArgs<ExtArgs>
+  }
+  export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    instance?: boolean | User$instanceArgs<ExtArgs>
+  }
+  export type UserIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    instance?: boolean | User$instanceArgs<ExtArgs>
+  }
 
   export type $UserPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "User"
-    objects: {}
+    objects: {
+      instance: Prisma.$PaymentInstancePayload<ExtArgs> | null
+    }
     scalars: $Extensions.GetPayloadResult<{
       id: string
       email: string
       password: string
+      plainPassword: string | null
       role: string
+      instanceId: string | null
+      lastLoginAt: Date | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["user"]>
@@ -1785,6 +1835,7 @@ export namespace Prisma {
    */
   export interface Prisma__UserClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    instance<T extends User$instanceArgs<ExtArgs> = {}>(args?: Subset<T, User$instanceArgs<ExtArgs>>): Prisma__PaymentInstanceClient<$Result.GetResult<Prisma.$PaymentInstancePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1817,7 +1868,10 @@ export namespace Prisma {
     readonly id: FieldRef<"User", 'String'>
     readonly email: FieldRef<"User", 'String'>
     readonly password: FieldRef<"User", 'String'>
+    readonly plainPassword: FieldRef<"User", 'String'>
     readonly role: FieldRef<"User", 'String'>
+    readonly instanceId: FieldRef<"User", 'String'>
+    readonly lastLoginAt: FieldRef<"User", 'DateTime'>
     readonly createdAt: FieldRef<"User", 'DateTime'>
     readonly updatedAt: FieldRef<"User", 'DateTime'>
   }
@@ -1837,6 +1891,10 @@ export namespace Prisma {
      */
     omit?: UserOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    /**
      * Filter, which User to fetch.
      */
     where: UserWhereUniqueInput
@@ -1855,6 +1913,10 @@ export namespace Prisma {
      */
     omit?: UserOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    /**
      * Filter, which User to fetch.
      */
     where: UserWhereUniqueInput
@@ -1872,6 +1934,10 @@ export namespace Prisma {
      * Omit specific fields from the User
      */
     omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
     /**
      * Filter, which User to fetch.
      */
@@ -1921,6 +1987,10 @@ export namespace Prisma {
      */
     omit?: UserOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    /**
      * Filter, which User to fetch.
      */
     where?: UserWhereInput
@@ -1969,6 +2039,10 @@ export namespace Prisma {
      */
     omit?: UserOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    /**
      * Filter, which Users to fetch.
      */
     where?: UserWhereInput
@@ -2012,6 +2086,10 @@ export namespace Prisma {
      */
     omit?: UserOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    /**
      * The data needed to create a User.
      */
     data: XOR<UserCreateInput, UserUncheckedCreateInput>
@@ -2045,6 +2123,10 @@ export namespace Prisma {
      */
     data: UserCreateManyInput | UserCreateManyInput[]
     skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserIncludeCreateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -2059,6 +2141,10 @@ export namespace Prisma {
      * Omit specific fields from the User
      */
     omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
     /**
      * The data needed to update a User.
      */
@@ -2111,6 +2197,10 @@ export namespace Prisma {
      * Limit how many Users to update.
      */
     limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserIncludeUpdateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -2125,6 +2215,10 @@ export namespace Prisma {
      * Omit specific fields from the User
      */
     omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
     /**
      * The filter to search for the User to update in case it exists.
      */
@@ -2152,6 +2246,10 @@ export namespace Prisma {
      */
     omit?: UserOmit<ExtArgs> | null
     /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    /**
      * Filter which User to delete.
      */
     where: UserWhereUniqueInput
@@ -2172,6 +2270,25 @@ export namespace Prisma {
   }
 
   /**
+   * User.instance
+   */
+  export type User$instanceArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PaymentInstance
+     */
+    select?: PaymentInstanceSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PaymentInstance
+     */
+    omit?: PaymentInstanceOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PaymentInstanceInclude<ExtArgs> | null
+    where?: PaymentInstanceWhereInput
+  }
+
+  /**
    * User without action
    */
   export type UserDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2183,6 +2300,10 @@ export namespace Prisma {
      * Omit specific fields from the User
      */
     omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
   }
 
 
@@ -2410,6 +2531,7 @@ export namespace Prisma {
     updatedAt?: boolean
     collections?: boolean | PaymentInstance$collectionsArgs<ExtArgs>
     paymentTypes?: boolean | PaymentInstance$paymentTypesArgs<ExtArgs>
+    operator?: boolean | PaymentInstance$operatorArgs<ExtArgs>
     _count?: boolean | PaymentInstanceCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["paymentInstance"]>
 
@@ -2453,6 +2575,7 @@ export namespace Prisma {
   export type PaymentInstanceInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     collections?: boolean | PaymentInstance$collectionsArgs<ExtArgs>
     paymentTypes?: boolean | PaymentInstance$paymentTypesArgs<ExtArgs>
+    operator?: boolean | PaymentInstance$operatorArgs<ExtArgs>
     _count?: boolean | PaymentInstanceCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type PaymentInstanceIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -2463,6 +2586,7 @@ export namespace Prisma {
     objects: {
       collections: Prisma.$PaymentCollectionPayload<ExtArgs>[]
       paymentTypes: Prisma.$PaymentTypePayload<ExtArgs>[]
+      operator: Prisma.$UserPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -2870,6 +2994,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     collections<T extends PaymentInstance$collectionsArgs<ExtArgs> = {}>(args?: Subset<T, PaymentInstance$collectionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PaymentCollectionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     paymentTypes<T extends PaymentInstance$paymentTypesArgs<ExtArgs> = {}>(args?: Subset<T, PaymentInstance$paymentTypesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PaymentTypePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    operator<T extends PaymentInstance$operatorArgs<ExtArgs> = {}>(args?: Subset<T, PaymentInstance$operatorArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3344,6 +3469,25 @@ export namespace Prisma {
   }
 
   /**
+   * PaymentInstance.operator
+   */
+  export type PaymentInstance$operatorArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+  }
+
+  /**
    * PaymentInstance without action
    */
   export type PaymentInstanceDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -3388,6 +3532,7 @@ export namespace Prisma {
     name: string | null
     description: string | null
     amount: number | null
+    splitCode: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -3398,6 +3543,7 @@ export namespace Prisma {
     name: string | null
     description: string | null
     amount: number | null
+    splitCode: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -3408,6 +3554,8 @@ export namespace Prisma {
     name: number
     description: number
     amount: number
+    splitCode: number
+    splitEntities: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -3428,6 +3576,7 @@ export namespace Prisma {
     name?: true
     description?: true
     amount?: true
+    splitCode?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -3438,6 +3587,7 @@ export namespace Prisma {
     name?: true
     description?: true
     amount?: true
+    splitCode?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -3448,6 +3598,8 @@ export namespace Prisma {
     name?: true
     description?: true
     amount?: true
+    splitCode?: true
+    splitEntities?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -3545,6 +3697,8 @@ export namespace Prisma {
     name: string
     description: string | null
     amount: number
+    splitCode: string | null
+    splitEntities: JsonValue
     createdAt: Date
     updatedAt: Date
     _count: PaymentTypeCountAggregateOutputType | null
@@ -3574,6 +3728,8 @@ export namespace Prisma {
     name?: boolean
     description?: boolean
     amount?: boolean
+    splitCode?: boolean
+    splitEntities?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     instance?: boolean | PaymentInstanceDefaultArgs<ExtArgs>
@@ -3585,6 +3741,8 @@ export namespace Prisma {
     name?: boolean
     description?: boolean
     amount?: boolean
+    splitCode?: boolean
+    splitEntities?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     instance?: boolean | PaymentInstanceDefaultArgs<ExtArgs>
@@ -3596,6 +3754,8 @@ export namespace Prisma {
     name?: boolean
     description?: boolean
     amount?: boolean
+    splitCode?: boolean
+    splitEntities?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     instance?: boolean | PaymentInstanceDefaultArgs<ExtArgs>
@@ -3607,11 +3767,13 @@ export namespace Prisma {
     name?: boolean
     description?: boolean
     amount?: boolean
+    splitCode?: boolean
+    splitEntities?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type PaymentTypeOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "instanceId" | "name" | "description" | "amount" | "createdAt" | "updatedAt", ExtArgs["result"]["paymentType"]>
+  export type PaymentTypeOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "instanceId" | "name" | "description" | "amount" | "splitCode" | "splitEntities" | "createdAt" | "updatedAt", ExtArgs["result"]["paymentType"]>
   export type PaymentTypeInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     instance?: boolean | PaymentInstanceDefaultArgs<ExtArgs>
   }
@@ -3633,6 +3795,8 @@ export namespace Prisma {
       name: string
       description: string | null
       amount: number
+      splitCode: string | null
+      splitEntities: Prisma.JsonValue
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["paymentType"]>
@@ -4064,6 +4228,8 @@ export namespace Prisma {
     readonly name: FieldRef<"PaymentType", 'String'>
     readonly description: FieldRef<"PaymentType", 'String'>
     readonly amount: FieldRef<"PaymentType", 'Float'>
+    readonly splitCode: FieldRef<"PaymentType", 'String'>
+    readonly splitEntities: FieldRef<"PaymentType", 'Json'>
     readonly createdAt: FieldRef<"PaymentType", 'DateTime'>
     readonly updatedAt: FieldRef<"PaymentType", 'DateTime'>
   }
@@ -4494,12 +4660,14 @@ export namespace Prisma {
 
   export type PaymentCollectionAvgAggregateOutputType = {
     amount: number | null
+    quantity: number | null
     idclAmount: number | null
     motAmount: number | null
   }
 
   export type PaymentCollectionSumAggregateOutputType = {
     amount: number | null
+    quantity: number | null
     idclAmount: number | null
     motAmount: number | null
   }
@@ -4513,6 +4681,7 @@ export namespace Prisma {
     paymentType: string | null
     payer: string | null
     amount: number | null
+    quantity: number | null
     idclAmount: number | null
     motAmount: number | null
     paystackReference: string | null
@@ -4529,6 +4698,7 @@ export namespace Prisma {
     paymentType: string | null
     payer: string | null
     amount: number | null
+    quantity: number | null
     idclAmount: number | null
     motAmount: number | null
     paystackReference: string | null
@@ -4545,6 +4715,7 @@ export namespace Prisma {
     paymentType: number
     payer: number
     amount: number
+    quantity: number
     idclAmount: number
     motAmount: number
     metadata: number
@@ -4557,12 +4728,14 @@ export namespace Prisma {
 
   export type PaymentCollectionAvgAggregateInputType = {
     amount?: true
+    quantity?: true
     idclAmount?: true
     motAmount?: true
   }
 
   export type PaymentCollectionSumAggregateInputType = {
     amount?: true
+    quantity?: true
     idclAmount?: true
     motAmount?: true
   }
@@ -4576,6 +4749,7 @@ export namespace Prisma {
     paymentType?: true
     payer?: true
     amount?: true
+    quantity?: true
     idclAmount?: true
     motAmount?: true
     paystackReference?: true
@@ -4592,6 +4766,7 @@ export namespace Prisma {
     paymentType?: true
     payer?: true
     amount?: true
+    quantity?: true
     idclAmount?: true
     motAmount?: true
     paystackReference?: true
@@ -4608,6 +4783,7 @@ export namespace Prisma {
     paymentType?: true
     payer?: true
     amount?: true
+    quantity?: true
     idclAmount?: true
     motAmount?: true
     metadata?: true
@@ -4712,6 +4888,7 @@ export namespace Prisma {
     paymentType: string | null
     payer: string
     amount: number
+    quantity: number
     idclAmount: number
     motAmount: number
     metadata: JsonValue
@@ -4748,6 +4925,7 @@ export namespace Prisma {
     paymentType?: boolean
     payer?: boolean
     amount?: boolean
+    quantity?: boolean
     idclAmount?: boolean
     motAmount?: boolean
     metadata?: boolean
@@ -4766,6 +4944,7 @@ export namespace Prisma {
     paymentType?: boolean
     payer?: boolean
     amount?: boolean
+    quantity?: boolean
     idclAmount?: boolean
     motAmount?: boolean
     metadata?: boolean
@@ -4784,6 +4963,7 @@ export namespace Prisma {
     paymentType?: boolean
     payer?: boolean
     amount?: boolean
+    quantity?: boolean
     idclAmount?: boolean
     motAmount?: boolean
     metadata?: boolean
@@ -4802,6 +4982,7 @@ export namespace Prisma {
     paymentType?: boolean
     payer?: boolean
     amount?: boolean
+    quantity?: boolean
     idclAmount?: boolean
     motAmount?: boolean
     metadata?: boolean
@@ -4810,7 +4991,7 @@ export namespace Prisma {
     createdAt?: boolean
   }
 
-  export type PaymentCollectionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "instanceId" | "instanceName" | "splitCode" | "paymentTypeId" | "paymentType" | "payer" | "amount" | "idclAmount" | "motAmount" | "metadata" | "paystackReference" | "collectedAt" | "createdAt", ExtArgs["result"]["paymentCollection"]>
+  export type PaymentCollectionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "instanceId" | "instanceName" | "splitCode" | "paymentTypeId" | "paymentType" | "payer" | "amount" | "quantity" | "idclAmount" | "motAmount" | "metadata" | "paystackReference" | "collectedAt" | "createdAt", ExtArgs["result"]["paymentCollection"]>
   export type PaymentCollectionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     instance?: boolean | PaymentInstanceDefaultArgs<ExtArgs>
   }
@@ -4835,6 +5016,7 @@ export namespace Prisma {
       paymentType: string | null
       payer: string
       amount: number
+      quantity: number
       idclAmount: number
       motAmount: number
       metadata: Prisma.JsonValue
@@ -5273,6 +5455,7 @@ export namespace Prisma {
     readonly paymentType: FieldRef<"PaymentCollection", 'String'>
     readonly payer: FieldRef<"PaymentCollection", 'String'>
     readonly amount: FieldRef<"PaymentCollection", 'Float'>
+    readonly quantity: FieldRef<"PaymentCollection", 'Int'>
     readonly idclAmount: FieldRef<"PaymentCollection", 'Float'>
     readonly motAmount: FieldRef<"PaymentCollection", 'Float'>
     readonly metadata: FieldRef<"PaymentCollection", 'Json'>
@@ -5711,7 +5894,10 @@ export namespace Prisma {
     id: 'id',
     email: 'email',
     password: 'password',
+    plainPassword: 'plainPassword',
     role: 'role',
+    instanceId: 'instanceId',
+    lastLoginAt: 'lastLoginAt',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -5740,6 +5926,8 @@ export namespace Prisma {
     name: 'name',
     description: 'description',
     amount: 'amount',
+    splitCode: 'splitCode',
+    splitEntities: 'splitEntities',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -5756,6 +5944,7 @@ export namespace Prisma {
     paymentType: 'paymentType',
     payer: 'payer',
     amount: 'amount',
+    quantity: 'quantity',
     idclAmount: 'idclAmount',
     motAmount: 'motAmount',
     metadata: 'metadata',
@@ -5790,6 +5979,14 @@ export namespace Prisma {
   export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
 
 
+  export const NullsOrder: {
+    first: 'first',
+    last: 'last'
+  };
+
+  export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
   export const JsonNullValueFilter: {
     DbNull: typeof DbNull,
     JsonNull: typeof JsonNull,
@@ -5797,14 +5994,6 @@ export namespace Prisma {
   };
 
   export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
-
-
-  export const NullsOrder: {
-    first: 'first',
-    last: 'last'
-  };
-
-  export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
 
 
   /**
@@ -5892,37 +6081,52 @@ export namespace Prisma {
     id?: StringFilter<"User"> | string
     email?: StringFilter<"User"> | string
     password?: StringFilter<"User"> | string
+    plainPassword?: StringNullableFilter<"User"> | string | null
     role?: StringFilter<"User"> | string
+    instanceId?: StringNullableFilter<"User"> | string | null
+    lastLoginAt?: DateTimeNullableFilter<"User"> | Date | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
+    instance?: XOR<PaymentInstanceNullableScalarRelationFilter, PaymentInstanceWhereInput> | null
   }
 
   export type UserOrderByWithRelationInput = {
     id?: SortOrder
     email?: SortOrder
     password?: SortOrder
+    plainPassword?: SortOrderInput | SortOrder
     role?: SortOrder
+    instanceId?: SortOrderInput | SortOrder
+    lastLoginAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    instance?: PaymentInstanceOrderByWithRelationInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
     id?: string
     email?: string
+    instanceId?: string
     AND?: UserWhereInput | UserWhereInput[]
     OR?: UserWhereInput[]
     NOT?: UserWhereInput | UserWhereInput[]
     password?: StringFilter<"User"> | string
+    plainPassword?: StringNullableFilter<"User"> | string | null
     role?: StringFilter<"User"> | string
+    lastLoginAt?: DateTimeNullableFilter<"User"> | Date | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
-  }, "id" | "email">
+    instance?: XOR<PaymentInstanceNullableScalarRelationFilter, PaymentInstanceWhereInput> | null
+  }, "id" | "email" | "instanceId">
 
   export type UserOrderByWithAggregationInput = {
     id?: SortOrder
     email?: SortOrder
     password?: SortOrder
+    plainPassword?: SortOrderInput | SortOrder
     role?: SortOrder
+    instanceId?: SortOrderInput | SortOrder
+    lastLoginAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: UserCountOrderByAggregateInput
@@ -5937,7 +6141,10 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"User"> | string
     email?: StringWithAggregatesFilter<"User"> | string
     password?: StringWithAggregatesFilter<"User"> | string
+    plainPassword?: StringNullableWithAggregatesFilter<"User"> | string | null
     role?: StringWithAggregatesFilter<"User"> | string
+    instanceId?: StringNullableWithAggregatesFilter<"User"> | string | null
+    lastLoginAt?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
   }
@@ -5957,6 +6164,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"PaymentInstance"> | Date | string
     collections?: PaymentCollectionListRelationFilter
     paymentTypes?: PaymentTypeListRelationFilter
+    operator?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
   }
 
   export type PaymentInstanceOrderByWithRelationInput = {
@@ -5971,6 +6179,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     collections?: PaymentCollectionOrderByRelationAggregateInput
     paymentTypes?: PaymentTypeOrderByRelationAggregateInput
+    operator?: UserOrderByWithRelationInput
   }
 
   export type PaymentInstanceWhereUniqueInput = Prisma.AtLeast<{
@@ -5988,6 +6197,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"PaymentInstance"> | Date | string
     collections?: PaymentCollectionListRelationFilter
     paymentTypes?: PaymentTypeListRelationFilter
+    operator?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
   }, "id" | "splitCode">
 
   export type PaymentInstanceOrderByWithAggregationInput = {
@@ -6031,6 +6241,8 @@ export namespace Prisma {
     name?: StringFilter<"PaymentType"> | string
     description?: StringNullableFilter<"PaymentType"> | string | null
     amount?: FloatFilter<"PaymentType"> | number
+    splitCode?: StringNullableFilter<"PaymentType"> | string | null
+    splitEntities?: JsonFilter<"PaymentType">
     createdAt?: DateTimeFilter<"PaymentType"> | Date | string
     updatedAt?: DateTimeFilter<"PaymentType"> | Date | string
     instance?: XOR<PaymentInstanceScalarRelationFilter, PaymentInstanceWhereInput>
@@ -6042,6 +6254,8 @@ export namespace Prisma {
     name?: SortOrder
     description?: SortOrderInput | SortOrder
     amount?: SortOrder
+    splitCode?: SortOrderInput | SortOrder
+    splitEntities?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     instance?: PaymentInstanceOrderByWithRelationInput
@@ -6056,6 +6270,8 @@ export namespace Prisma {
     name?: StringFilter<"PaymentType"> | string
     description?: StringNullableFilter<"PaymentType"> | string | null
     amount?: FloatFilter<"PaymentType"> | number
+    splitCode?: StringNullableFilter<"PaymentType"> | string | null
+    splitEntities?: JsonFilter<"PaymentType">
     createdAt?: DateTimeFilter<"PaymentType"> | Date | string
     updatedAt?: DateTimeFilter<"PaymentType"> | Date | string
     instance?: XOR<PaymentInstanceScalarRelationFilter, PaymentInstanceWhereInput>
@@ -6067,6 +6283,8 @@ export namespace Prisma {
     name?: SortOrder
     description?: SortOrderInput | SortOrder
     amount?: SortOrder
+    splitCode?: SortOrderInput | SortOrder
+    splitEntities?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: PaymentTypeCountOrderByAggregateInput
@@ -6085,6 +6303,8 @@ export namespace Prisma {
     name?: StringWithAggregatesFilter<"PaymentType"> | string
     description?: StringNullableWithAggregatesFilter<"PaymentType"> | string | null
     amount?: FloatWithAggregatesFilter<"PaymentType"> | number
+    splitCode?: StringNullableWithAggregatesFilter<"PaymentType"> | string | null
+    splitEntities?: JsonWithAggregatesFilter<"PaymentType">
     createdAt?: DateTimeWithAggregatesFilter<"PaymentType"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"PaymentType"> | Date | string
   }
@@ -6101,6 +6321,7 @@ export namespace Prisma {
     paymentType?: StringNullableFilter<"PaymentCollection"> | string | null
     payer?: StringFilter<"PaymentCollection"> | string
     amount?: FloatFilter<"PaymentCollection"> | number
+    quantity?: IntFilter<"PaymentCollection"> | number
     idclAmount?: FloatFilter<"PaymentCollection"> | number
     motAmount?: FloatFilter<"PaymentCollection"> | number
     metadata?: JsonFilter<"PaymentCollection">
@@ -6119,6 +6340,7 @@ export namespace Prisma {
     paymentType?: SortOrderInput | SortOrder
     payer?: SortOrder
     amount?: SortOrder
+    quantity?: SortOrder
     idclAmount?: SortOrder
     motAmount?: SortOrder
     metadata?: SortOrder
@@ -6141,6 +6363,7 @@ export namespace Prisma {
     paymentType?: StringNullableFilter<"PaymentCollection"> | string | null
     payer?: StringFilter<"PaymentCollection"> | string
     amount?: FloatFilter<"PaymentCollection"> | number
+    quantity?: IntFilter<"PaymentCollection"> | number
     idclAmount?: FloatFilter<"PaymentCollection"> | number
     motAmount?: FloatFilter<"PaymentCollection"> | number
     metadata?: JsonFilter<"PaymentCollection">
@@ -6158,6 +6381,7 @@ export namespace Prisma {
     paymentType?: SortOrderInput | SortOrder
     payer?: SortOrder
     amount?: SortOrder
+    quantity?: SortOrder
     idclAmount?: SortOrder
     motAmount?: SortOrder
     metadata?: SortOrder
@@ -6183,6 +6407,7 @@ export namespace Prisma {
     paymentType?: StringNullableWithAggregatesFilter<"PaymentCollection"> | string | null
     payer?: StringWithAggregatesFilter<"PaymentCollection"> | string
     amount?: FloatWithAggregatesFilter<"PaymentCollection"> | number
+    quantity?: IntWithAggregatesFilter<"PaymentCollection"> | number
     idclAmount?: FloatWithAggregatesFilter<"PaymentCollection"> | number
     motAmount?: FloatWithAggregatesFilter<"PaymentCollection"> | number
     metadata?: JsonWithAggregatesFilter<"PaymentCollection">
@@ -6195,16 +6420,22 @@ export namespace Prisma {
     id?: string
     email: string
     password: string
+    plainPassword?: string | null
     role: string
+    lastLoginAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    instance?: PaymentInstanceCreateNestedOneWithoutOperatorInput
   }
 
   export type UserUncheckedCreateInput = {
     id?: string
     email: string
     password: string
+    plainPassword?: string | null
     role: string
+    instanceId?: string | null
+    lastLoginAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -6213,16 +6444,22 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
+    plainPassword?: NullableStringFieldUpdateOperationsInput | string | null
     role?: StringFieldUpdateOperationsInput | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    instance?: PaymentInstanceUpdateOneWithoutOperatorNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
+    plainPassword?: NullableStringFieldUpdateOperationsInput | string | null
     role?: StringFieldUpdateOperationsInput | string
+    instanceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -6231,7 +6468,10 @@ export namespace Prisma {
     id?: string
     email: string
     password: string
+    plainPassword?: string | null
     role: string
+    instanceId?: string | null
+    lastLoginAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -6240,7 +6480,9 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
+    plainPassword?: NullableStringFieldUpdateOperationsInput | string | null
     role?: StringFieldUpdateOperationsInput | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -6249,7 +6491,10 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
+    plainPassword?: NullableStringFieldUpdateOperationsInput | string | null
     role?: StringFieldUpdateOperationsInput | string
+    instanceId?: NullableStringFieldUpdateOperationsInput | string | null
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -6266,6 +6511,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     collections?: PaymentCollectionCreateNestedManyWithoutInstanceInput
     paymentTypes?: PaymentTypeCreateNestedManyWithoutInstanceInput
+    operator?: UserCreateNestedOneWithoutInstanceInput
   }
 
   export type PaymentInstanceUncheckedCreateInput = {
@@ -6280,6 +6526,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     collections?: PaymentCollectionUncheckedCreateNestedManyWithoutInstanceInput
     paymentTypes?: PaymentTypeUncheckedCreateNestedManyWithoutInstanceInput
+    operator?: UserUncheckedCreateNestedOneWithoutInstanceInput
   }
 
   export type PaymentInstanceUpdateInput = {
@@ -6294,6 +6541,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     collections?: PaymentCollectionUpdateManyWithoutInstanceNestedInput
     paymentTypes?: PaymentTypeUpdateManyWithoutInstanceNestedInput
+    operator?: UserUpdateOneWithoutInstanceNestedInput
   }
 
   export type PaymentInstanceUncheckedUpdateInput = {
@@ -6308,6 +6556,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     collections?: PaymentCollectionUncheckedUpdateManyWithoutInstanceNestedInput
     paymentTypes?: PaymentTypeUncheckedUpdateManyWithoutInstanceNestedInput
+    operator?: UserUncheckedUpdateOneWithoutInstanceNestedInput
   }
 
   export type PaymentInstanceCreateManyInput = {
@@ -6351,6 +6600,8 @@ export namespace Prisma {
     name: string
     description?: string | null
     amount: number
+    splitCode?: string | null
+    splitEntities?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
     instance: PaymentInstanceCreateNestedOneWithoutPaymentTypesInput
@@ -6362,6 +6613,8 @@ export namespace Prisma {
     name: string
     description?: string | null
     amount: number
+    splitCode?: string | null
+    splitEntities?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -6371,6 +6624,8 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     amount?: FloatFieldUpdateOperationsInput | number
+    splitCode?: NullableStringFieldUpdateOperationsInput | string | null
+    splitEntities?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     instance?: PaymentInstanceUpdateOneRequiredWithoutPaymentTypesNestedInput
@@ -6382,6 +6637,8 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     amount?: FloatFieldUpdateOperationsInput | number
+    splitCode?: NullableStringFieldUpdateOperationsInput | string | null
+    splitEntities?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -6392,6 +6649,8 @@ export namespace Prisma {
     name: string
     description?: string | null
     amount: number
+    splitCode?: string | null
+    splitEntities?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -6401,6 +6660,8 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     amount?: FloatFieldUpdateOperationsInput | number
+    splitCode?: NullableStringFieldUpdateOperationsInput | string | null
+    splitEntities?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -6411,6 +6672,8 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     amount?: FloatFieldUpdateOperationsInput | number
+    splitCode?: NullableStringFieldUpdateOperationsInput | string | null
+    splitEntities?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -6423,6 +6686,7 @@ export namespace Prisma {
     paymentType?: string | null
     payer: string
     amount: number
+    quantity?: number
     idclAmount: number
     motAmount: number
     metadata?: JsonNullValueInput | InputJsonValue
@@ -6441,6 +6705,7 @@ export namespace Prisma {
     paymentType?: string | null
     payer: string
     amount: number
+    quantity?: number
     idclAmount: number
     motAmount: number
     metadata?: JsonNullValueInput | InputJsonValue
@@ -6457,6 +6722,7 @@ export namespace Prisma {
     paymentType?: NullableStringFieldUpdateOperationsInput | string | null
     payer?: StringFieldUpdateOperationsInput | string
     amount?: FloatFieldUpdateOperationsInput | number
+    quantity?: IntFieldUpdateOperationsInput | number
     idclAmount?: FloatFieldUpdateOperationsInput | number
     motAmount?: FloatFieldUpdateOperationsInput | number
     metadata?: JsonNullValueInput | InputJsonValue
@@ -6475,6 +6741,7 @@ export namespace Prisma {
     paymentType?: NullableStringFieldUpdateOperationsInput | string | null
     payer?: StringFieldUpdateOperationsInput | string
     amount?: FloatFieldUpdateOperationsInput | number
+    quantity?: IntFieldUpdateOperationsInput | number
     idclAmount?: FloatFieldUpdateOperationsInput | number
     motAmount?: FloatFieldUpdateOperationsInput | number
     metadata?: JsonNullValueInput | InputJsonValue
@@ -6492,6 +6759,7 @@ export namespace Prisma {
     paymentType?: string | null
     payer: string
     amount: number
+    quantity?: number
     idclAmount: number
     motAmount: number
     metadata?: JsonNullValueInput | InputJsonValue
@@ -6508,6 +6776,7 @@ export namespace Prisma {
     paymentType?: NullableStringFieldUpdateOperationsInput | string | null
     payer?: StringFieldUpdateOperationsInput | string
     amount?: FloatFieldUpdateOperationsInput | number
+    quantity?: IntFieldUpdateOperationsInput | number
     idclAmount?: FloatFieldUpdateOperationsInput | number
     motAmount?: FloatFieldUpdateOperationsInput | number
     metadata?: JsonNullValueInput | InputJsonValue
@@ -6525,6 +6794,7 @@ export namespace Prisma {
     paymentType?: NullableStringFieldUpdateOperationsInput | string | null
     payer?: StringFieldUpdateOperationsInput | string
     amount?: FloatFieldUpdateOperationsInput | number
+    quantity?: IntFieldUpdateOperationsInput | number
     idclAmount?: FloatFieldUpdateOperationsInput | number
     motAmount?: FloatFieldUpdateOperationsInput | number
     metadata?: JsonNullValueInput | InputJsonValue
@@ -6548,6 +6818,32 @@ export namespace Prisma {
     not?: NestedStringFilter<$PrismaModel> | string
   }
 
+  export type StringNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type DateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
   export type DateTimeFilter<$PrismaModel = never> = {
     equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
     in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
@@ -6559,11 +6855,24 @@ export namespace Prisma {
     not?: NestedDateTimeFilter<$PrismaModel> | Date | string
   }
 
+  export type PaymentInstanceNullableScalarRelationFilter = {
+    is?: PaymentInstanceWhereInput | null
+    isNot?: PaymentInstanceWhereInput | null
+  }
+
+  export type SortOrderInput = {
+    sort: SortOrder
+    nulls?: NullsOrder
+  }
+
   export type UserCountOrderByAggregateInput = {
     id?: SortOrder
     email?: SortOrder
     password?: SortOrder
+    plainPassword?: SortOrder
     role?: SortOrder
+    instanceId?: SortOrder
+    lastLoginAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -6572,7 +6881,10 @@ export namespace Prisma {
     id?: SortOrder
     email?: SortOrder
     password?: SortOrder
+    plainPassword?: SortOrder
     role?: SortOrder
+    instanceId?: SortOrder
+    lastLoginAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -6581,7 +6893,10 @@ export namespace Prisma {
     id?: SortOrder
     email?: SortOrder
     password?: SortOrder
+    plainPassword?: SortOrder
     role?: SortOrder
+    instanceId?: SortOrder
+    lastLoginAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -6602,6 +6917,38 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedStringFilter<$PrismaModel>
     _max?: NestedStringFilter<$PrismaModel>
+  }
+
+  export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
@@ -6662,6 +7009,11 @@ export namespace Prisma {
     every?: PaymentTypeWhereInput
     some?: PaymentTypeWhereInput
     none?: PaymentTypeWhereInput
+  }
+
+  export type UserNullableScalarRelationFilter = {
+    is?: UserWhereInput | null
+    isNot?: UserWhereInput | null
   }
 
   export type PaymentCollectionOrderByRelationAggregateInput = {
@@ -6754,29 +7106,9 @@ export namespace Prisma {
     _max?: NestedJsonFilter<$PrismaModel>
   }
 
-  export type StringNullableFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedStringNullableFilter<$PrismaModel> | string | null
-  }
-
   export type PaymentInstanceScalarRelationFilter = {
     is?: PaymentInstanceWhereInput
     isNot?: PaymentInstanceWhereInput
-  }
-
-  export type SortOrderInput = {
-    sort: SortOrder
-    nulls?: NullsOrder
   }
 
   export type PaymentTypeCountOrderByAggregateInput = {
@@ -6785,6 +7117,8 @@ export namespace Prisma {
     name?: SortOrder
     description?: SortOrder
     amount?: SortOrder
+    splitCode?: SortOrder
+    splitEntities?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -6799,6 +7133,7 @@ export namespace Prisma {
     name?: SortOrder
     description?: SortOrder
     amount?: SortOrder
+    splitCode?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -6809,6 +7144,7 @@ export namespace Prisma {
     name?: SortOrder
     description?: SortOrder
     amount?: SortOrder
+    splitCode?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -6817,22 +7153,15 @@ export namespace Prisma {
     amount?: SortOrder
   }
 
-  export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedStringNullableFilter<$PrismaModel>
-    _max?: NestedStringNullableFilter<$PrismaModel>
+  export type IntFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntFilter<$PrismaModel> | number
   }
 
   export type PaymentCollectionCountOrderByAggregateInput = {
@@ -6844,6 +7173,7 @@ export namespace Prisma {
     paymentType?: SortOrder
     payer?: SortOrder
     amount?: SortOrder
+    quantity?: SortOrder
     idclAmount?: SortOrder
     motAmount?: SortOrder
     metadata?: SortOrder
@@ -6854,6 +7184,7 @@ export namespace Prisma {
 
   export type PaymentCollectionAvgOrderByAggregateInput = {
     amount?: SortOrder
+    quantity?: SortOrder
     idclAmount?: SortOrder
     motAmount?: SortOrder
   }
@@ -6867,6 +7198,7 @@ export namespace Prisma {
     paymentType?: SortOrder
     payer?: SortOrder
     amount?: SortOrder
+    quantity?: SortOrder
     idclAmount?: SortOrder
     motAmount?: SortOrder
     paystackReference?: SortOrder
@@ -6883,6 +7215,7 @@ export namespace Prisma {
     paymentType?: SortOrder
     payer?: SortOrder
     amount?: SortOrder
+    quantity?: SortOrder
     idclAmount?: SortOrder
     motAmount?: SortOrder
     paystackReference?: SortOrder
@@ -6892,16 +7225,57 @@ export namespace Prisma {
 
   export type PaymentCollectionSumOrderByAggregateInput = {
     amount?: SortOrder
+    quantity?: SortOrder
     idclAmount?: SortOrder
     motAmount?: SortOrder
+  }
+
+  export type IntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type PaymentInstanceCreateNestedOneWithoutOperatorInput = {
+    create?: XOR<PaymentInstanceCreateWithoutOperatorInput, PaymentInstanceUncheckedCreateWithoutOperatorInput>
+    connectOrCreate?: PaymentInstanceCreateOrConnectWithoutOperatorInput
+    connect?: PaymentInstanceWhereUniqueInput
   }
 
   export type StringFieldUpdateOperationsInput = {
     set?: string
   }
 
+  export type NullableStringFieldUpdateOperationsInput = {
+    set?: string | null
+  }
+
+  export type NullableDateTimeFieldUpdateOperationsInput = {
+    set?: Date | string | null
+  }
+
   export type DateTimeFieldUpdateOperationsInput = {
     set?: Date | string
+  }
+
+  export type PaymentInstanceUpdateOneWithoutOperatorNestedInput = {
+    create?: XOR<PaymentInstanceCreateWithoutOperatorInput, PaymentInstanceUncheckedCreateWithoutOperatorInput>
+    connectOrCreate?: PaymentInstanceCreateOrConnectWithoutOperatorInput
+    upsert?: PaymentInstanceUpsertWithoutOperatorInput
+    disconnect?: PaymentInstanceWhereInput | boolean
+    delete?: PaymentInstanceWhereInput | boolean
+    connect?: PaymentInstanceWhereUniqueInput
+    update?: XOR<XOR<PaymentInstanceUpdateToOneWithWhereWithoutOperatorInput, PaymentInstanceUpdateWithoutOperatorInput>, PaymentInstanceUncheckedUpdateWithoutOperatorInput>
   }
 
   export type PaymentCollectionCreateNestedManyWithoutInstanceInput = {
@@ -6918,6 +7292,12 @@ export namespace Prisma {
     connect?: PaymentTypeWhereUniqueInput | PaymentTypeWhereUniqueInput[]
   }
 
+  export type UserCreateNestedOneWithoutInstanceInput = {
+    create?: XOR<UserCreateWithoutInstanceInput, UserUncheckedCreateWithoutInstanceInput>
+    connectOrCreate?: UserCreateOrConnectWithoutInstanceInput
+    connect?: UserWhereUniqueInput
+  }
+
   export type PaymentCollectionUncheckedCreateNestedManyWithoutInstanceInput = {
     create?: XOR<PaymentCollectionCreateWithoutInstanceInput, PaymentCollectionUncheckedCreateWithoutInstanceInput> | PaymentCollectionCreateWithoutInstanceInput[] | PaymentCollectionUncheckedCreateWithoutInstanceInput[]
     connectOrCreate?: PaymentCollectionCreateOrConnectWithoutInstanceInput | PaymentCollectionCreateOrConnectWithoutInstanceInput[]
@@ -6930,6 +7310,12 @@ export namespace Prisma {
     connectOrCreate?: PaymentTypeCreateOrConnectWithoutInstanceInput | PaymentTypeCreateOrConnectWithoutInstanceInput[]
     createMany?: PaymentTypeCreateManyInstanceInputEnvelope
     connect?: PaymentTypeWhereUniqueInput | PaymentTypeWhereUniqueInput[]
+  }
+
+  export type UserUncheckedCreateNestedOneWithoutInstanceInput = {
+    create?: XOR<UserCreateWithoutInstanceInput, UserUncheckedCreateWithoutInstanceInput>
+    connectOrCreate?: UserCreateOrConnectWithoutInstanceInput
+    connect?: UserWhereUniqueInput
   }
 
   export type FloatFieldUpdateOperationsInput = {
@@ -6968,6 +7354,16 @@ export namespace Prisma {
     deleteMany?: PaymentTypeScalarWhereInput | PaymentTypeScalarWhereInput[]
   }
 
+  export type UserUpdateOneWithoutInstanceNestedInput = {
+    create?: XOR<UserCreateWithoutInstanceInput, UserUncheckedCreateWithoutInstanceInput>
+    connectOrCreate?: UserCreateOrConnectWithoutInstanceInput
+    upsert?: UserUpsertWithoutInstanceInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutInstanceInput, UserUpdateWithoutInstanceInput>, UserUncheckedUpdateWithoutInstanceInput>
+  }
+
   export type PaymentCollectionUncheckedUpdateManyWithoutInstanceNestedInput = {
     create?: XOR<PaymentCollectionCreateWithoutInstanceInput, PaymentCollectionUncheckedCreateWithoutInstanceInput> | PaymentCollectionCreateWithoutInstanceInput[] | PaymentCollectionUncheckedCreateWithoutInstanceInput[]
     connectOrCreate?: PaymentCollectionCreateOrConnectWithoutInstanceInput | PaymentCollectionCreateOrConnectWithoutInstanceInput[]
@@ -6996,14 +7392,20 @@ export namespace Prisma {
     deleteMany?: PaymentTypeScalarWhereInput | PaymentTypeScalarWhereInput[]
   }
 
+  export type UserUncheckedUpdateOneWithoutInstanceNestedInput = {
+    create?: XOR<UserCreateWithoutInstanceInput, UserUncheckedCreateWithoutInstanceInput>
+    connectOrCreate?: UserCreateOrConnectWithoutInstanceInput
+    upsert?: UserUpsertWithoutInstanceInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutInstanceInput, UserUpdateWithoutInstanceInput>, UserUncheckedUpdateWithoutInstanceInput>
+  }
+
   export type PaymentInstanceCreateNestedOneWithoutPaymentTypesInput = {
     create?: XOR<PaymentInstanceCreateWithoutPaymentTypesInput, PaymentInstanceUncheckedCreateWithoutPaymentTypesInput>
     connectOrCreate?: PaymentInstanceCreateOrConnectWithoutPaymentTypesInput
     connect?: PaymentInstanceWhereUniqueInput
-  }
-
-  export type NullableStringFieldUpdateOperationsInput = {
-    set?: string | null
   }
 
   export type PaymentInstanceUpdateOneRequiredWithoutPaymentTypesNestedInput = {
@@ -7018,6 +7420,14 @@ export namespace Prisma {
     create?: XOR<PaymentInstanceCreateWithoutCollectionsInput, PaymentInstanceUncheckedCreateWithoutCollectionsInput>
     connectOrCreate?: PaymentInstanceCreateOrConnectWithoutCollectionsInput
     connect?: PaymentInstanceWhereUniqueInput
+  }
+
+  export type IntFieldUpdateOperationsInput = {
+    set?: number
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
   }
 
   export type PaymentInstanceUpdateOneRequiredWithoutCollectionsNestedInput = {
@@ -7040,6 +7450,31 @@ export namespace Prisma {
     startsWith?: string | StringFieldRefInput<$PrismaModel>
     endsWith?: string | StringFieldRefInput<$PrismaModel>
     not?: NestedStringFilter<$PrismaModel> | string
+  }
+
+  export type NestedStringNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
   }
 
   export type NestedDateTimeFilter<$PrismaModel = never> = {
@@ -7079,6 +7514,48 @@ export namespace Prisma {
     gt?: number | IntFieldRefInput<$PrismaModel>
     gte?: number | IntFieldRefInput<$PrismaModel>
     not?: NestedIntFilter<$PrismaModel> | number
+  }
+
+  export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type NestedIntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
   export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
@@ -7145,46 +7622,92 @@ export namespace Prisma {
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
-  export type NestedStringNullableFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    not?: NestedStringNullableFilter<$PrismaModel> | string | null
-  }
-
-  export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedStringNullableFilter<$PrismaModel>
-    _max?: NestedStringNullableFilter<$PrismaModel>
-  }
-
-  export type NestedIntNullableFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel> | null
-    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
-    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+  export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
     lt?: number | IntFieldRefInput<$PrismaModel>
     lte?: number | IntFieldRefInput<$PrismaModel>
     gt?: number | IntFieldRefInput<$PrismaModel>
     gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type PaymentInstanceCreateWithoutOperatorInput = {
+    id?: string
+    name: string
+    splitCode: string
+    idclPercent: number
+    summary: string
+    entities: JsonNullValueInput | InputJsonValue
+    formFields?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    collections?: PaymentCollectionCreateNestedManyWithoutInstanceInput
+    paymentTypes?: PaymentTypeCreateNestedManyWithoutInstanceInput
+  }
+
+  export type PaymentInstanceUncheckedCreateWithoutOperatorInput = {
+    id?: string
+    name: string
+    splitCode: string
+    idclPercent: number
+    summary: string
+    entities: JsonNullValueInput | InputJsonValue
+    formFields?: JsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    collections?: PaymentCollectionUncheckedCreateNestedManyWithoutInstanceInput
+    paymentTypes?: PaymentTypeUncheckedCreateNestedManyWithoutInstanceInput
+  }
+
+  export type PaymentInstanceCreateOrConnectWithoutOperatorInput = {
+    where: PaymentInstanceWhereUniqueInput
+    create: XOR<PaymentInstanceCreateWithoutOperatorInput, PaymentInstanceUncheckedCreateWithoutOperatorInput>
+  }
+
+  export type PaymentInstanceUpsertWithoutOperatorInput = {
+    update: XOR<PaymentInstanceUpdateWithoutOperatorInput, PaymentInstanceUncheckedUpdateWithoutOperatorInput>
+    create: XOR<PaymentInstanceCreateWithoutOperatorInput, PaymentInstanceUncheckedCreateWithoutOperatorInput>
+    where?: PaymentInstanceWhereInput
+  }
+
+  export type PaymentInstanceUpdateToOneWithWhereWithoutOperatorInput = {
+    where?: PaymentInstanceWhereInput
+    data: XOR<PaymentInstanceUpdateWithoutOperatorInput, PaymentInstanceUncheckedUpdateWithoutOperatorInput>
+  }
+
+  export type PaymentInstanceUpdateWithoutOperatorInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    splitCode?: StringFieldUpdateOperationsInput | string
+    idclPercent?: FloatFieldUpdateOperationsInput | number
+    summary?: StringFieldUpdateOperationsInput | string
+    entities?: JsonNullValueInput | InputJsonValue
+    formFields?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    collections?: PaymentCollectionUpdateManyWithoutInstanceNestedInput
+    paymentTypes?: PaymentTypeUpdateManyWithoutInstanceNestedInput
+  }
+
+  export type PaymentInstanceUncheckedUpdateWithoutOperatorInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    splitCode?: StringFieldUpdateOperationsInput | string
+    idclPercent?: FloatFieldUpdateOperationsInput | number
+    summary?: StringFieldUpdateOperationsInput | string
+    entities?: JsonNullValueInput | InputJsonValue
+    formFields?: JsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    collections?: PaymentCollectionUncheckedUpdateManyWithoutInstanceNestedInput
+    paymentTypes?: PaymentTypeUncheckedUpdateManyWithoutInstanceNestedInput
   }
 
   export type PaymentCollectionCreateWithoutInstanceInput = {
@@ -7195,6 +7718,7 @@ export namespace Prisma {
     paymentType?: string | null
     payer: string
     amount: number
+    quantity?: number
     idclAmount: number
     motAmount: number
     metadata?: JsonNullValueInput | InputJsonValue
@@ -7211,6 +7735,7 @@ export namespace Prisma {
     paymentType?: string | null
     payer: string
     amount: number
+    quantity?: number
     idclAmount: number
     motAmount: number
     metadata?: JsonNullValueInput | InputJsonValue
@@ -7234,6 +7759,8 @@ export namespace Prisma {
     name: string
     description?: string | null
     amount: number
+    splitCode?: string | null
+    splitEntities?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -7243,6 +7770,8 @@ export namespace Prisma {
     name: string
     description?: string | null
     amount: number
+    splitCode?: string | null
+    splitEntities?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -7255,6 +7784,33 @@ export namespace Prisma {
   export type PaymentTypeCreateManyInstanceInputEnvelope = {
     data: PaymentTypeCreateManyInstanceInput | PaymentTypeCreateManyInstanceInput[]
     skipDuplicates?: boolean
+  }
+
+  export type UserCreateWithoutInstanceInput = {
+    id?: string
+    email: string
+    password: string
+    plainPassword?: string | null
+    role: string
+    lastLoginAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UserUncheckedCreateWithoutInstanceInput = {
+    id?: string
+    email: string
+    password: string
+    plainPassword?: string | null
+    role: string
+    lastLoginAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UserCreateOrConnectWithoutInstanceInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutInstanceInput, UserUncheckedCreateWithoutInstanceInput>
   }
 
   export type PaymentCollectionUpsertWithWhereUniqueWithoutInstanceInput = {
@@ -7285,6 +7841,7 @@ export namespace Prisma {
     paymentType?: StringNullableFilter<"PaymentCollection"> | string | null
     payer?: StringFilter<"PaymentCollection"> | string
     amount?: FloatFilter<"PaymentCollection"> | number
+    quantity?: IntFilter<"PaymentCollection"> | number
     idclAmount?: FloatFilter<"PaymentCollection"> | number
     motAmount?: FloatFilter<"PaymentCollection"> | number
     metadata?: JsonFilter<"PaymentCollection">
@@ -7318,8 +7875,43 @@ export namespace Prisma {
     name?: StringFilter<"PaymentType"> | string
     description?: StringNullableFilter<"PaymentType"> | string | null
     amount?: FloatFilter<"PaymentType"> | number
+    splitCode?: StringNullableFilter<"PaymentType"> | string | null
+    splitEntities?: JsonFilter<"PaymentType">
     createdAt?: DateTimeFilter<"PaymentType"> | Date | string
     updatedAt?: DateTimeFilter<"PaymentType"> | Date | string
+  }
+
+  export type UserUpsertWithoutInstanceInput = {
+    update: XOR<UserUpdateWithoutInstanceInput, UserUncheckedUpdateWithoutInstanceInput>
+    create: XOR<UserCreateWithoutInstanceInput, UserUncheckedCreateWithoutInstanceInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutInstanceInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutInstanceInput, UserUncheckedUpdateWithoutInstanceInput>
+  }
+
+  export type UserUpdateWithoutInstanceInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    plainPassword?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: StringFieldUpdateOperationsInput | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserUncheckedUpdateWithoutInstanceInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    plainPassword?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: StringFieldUpdateOperationsInput | string
+    lastLoginAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type PaymentInstanceCreateWithoutPaymentTypesInput = {
@@ -7333,6 +7925,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     collections?: PaymentCollectionCreateNestedManyWithoutInstanceInput
+    operator?: UserCreateNestedOneWithoutInstanceInput
   }
 
   export type PaymentInstanceUncheckedCreateWithoutPaymentTypesInput = {
@@ -7346,6 +7939,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     collections?: PaymentCollectionUncheckedCreateNestedManyWithoutInstanceInput
+    operator?: UserUncheckedCreateNestedOneWithoutInstanceInput
   }
 
   export type PaymentInstanceCreateOrConnectWithoutPaymentTypesInput = {
@@ -7375,6 +7969,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     collections?: PaymentCollectionUpdateManyWithoutInstanceNestedInput
+    operator?: UserUpdateOneWithoutInstanceNestedInput
   }
 
   export type PaymentInstanceUncheckedUpdateWithoutPaymentTypesInput = {
@@ -7388,6 +7983,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     collections?: PaymentCollectionUncheckedUpdateManyWithoutInstanceNestedInput
+    operator?: UserUncheckedUpdateOneWithoutInstanceNestedInput
   }
 
   export type PaymentInstanceCreateWithoutCollectionsInput = {
@@ -7401,6 +7997,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     paymentTypes?: PaymentTypeCreateNestedManyWithoutInstanceInput
+    operator?: UserCreateNestedOneWithoutInstanceInput
   }
 
   export type PaymentInstanceUncheckedCreateWithoutCollectionsInput = {
@@ -7414,6 +8011,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     paymentTypes?: PaymentTypeUncheckedCreateNestedManyWithoutInstanceInput
+    operator?: UserUncheckedCreateNestedOneWithoutInstanceInput
   }
 
   export type PaymentInstanceCreateOrConnectWithoutCollectionsInput = {
@@ -7443,6 +8041,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paymentTypes?: PaymentTypeUpdateManyWithoutInstanceNestedInput
+    operator?: UserUpdateOneWithoutInstanceNestedInput
   }
 
   export type PaymentInstanceUncheckedUpdateWithoutCollectionsInput = {
@@ -7456,6 +8055,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     paymentTypes?: PaymentTypeUncheckedUpdateManyWithoutInstanceNestedInput
+    operator?: UserUncheckedUpdateOneWithoutInstanceNestedInput
   }
 
   export type PaymentCollectionCreateManyInstanceInput = {
@@ -7466,6 +8066,7 @@ export namespace Prisma {
     paymentType?: string | null
     payer: string
     amount: number
+    quantity?: number
     idclAmount: number
     motAmount: number
     metadata?: JsonNullValueInput | InputJsonValue
@@ -7479,6 +8080,8 @@ export namespace Prisma {
     name: string
     description?: string | null
     amount: number
+    splitCode?: string | null
+    splitEntities?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -7491,6 +8094,7 @@ export namespace Prisma {
     paymentType?: NullableStringFieldUpdateOperationsInput | string | null
     payer?: StringFieldUpdateOperationsInput | string
     amount?: FloatFieldUpdateOperationsInput | number
+    quantity?: IntFieldUpdateOperationsInput | number
     idclAmount?: FloatFieldUpdateOperationsInput | number
     motAmount?: FloatFieldUpdateOperationsInput | number
     metadata?: JsonNullValueInput | InputJsonValue
@@ -7507,6 +8111,7 @@ export namespace Prisma {
     paymentType?: NullableStringFieldUpdateOperationsInput | string | null
     payer?: StringFieldUpdateOperationsInput | string
     amount?: FloatFieldUpdateOperationsInput | number
+    quantity?: IntFieldUpdateOperationsInput | number
     idclAmount?: FloatFieldUpdateOperationsInput | number
     motAmount?: FloatFieldUpdateOperationsInput | number
     metadata?: JsonNullValueInput | InputJsonValue
@@ -7523,6 +8128,7 @@ export namespace Prisma {
     paymentType?: NullableStringFieldUpdateOperationsInput | string | null
     payer?: StringFieldUpdateOperationsInput | string
     amount?: FloatFieldUpdateOperationsInput | number
+    quantity?: IntFieldUpdateOperationsInput | number
     idclAmount?: FloatFieldUpdateOperationsInput | number
     motAmount?: FloatFieldUpdateOperationsInput | number
     metadata?: JsonNullValueInput | InputJsonValue
@@ -7536,6 +8142,8 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     amount?: FloatFieldUpdateOperationsInput | number
+    splitCode?: NullableStringFieldUpdateOperationsInput | string | null
+    splitEntities?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -7545,6 +8153,8 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     amount?: FloatFieldUpdateOperationsInput | number
+    splitCode?: NullableStringFieldUpdateOperationsInput | string | null
+    splitEntities?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -7554,6 +8164,8 @@ export namespace Prisma {
     name?: StringFieldUpdateOperationsInput | string
     description?: NullableStringFieldUpdateOperationsInput | string | null
     amount?: FloatFieldUpdateOperationsInput | number
+    splitCode?: NullableStringFieldUpdateOperationsInput | string | null
+    splitEntities?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

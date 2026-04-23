@@ -2,8 +2,8 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { AUTH_COOKIE_NAME } from "./lib/auth";
 
-const protectedRoutes = ["/dashboard", "/pay", "/logs"];
-const adminOnlyRoutes = ["/dashboard", "/logs"];
+const protectedRoutes = ["/dashboard", "/pay", "/logs", "/profile", "/operators"];
+const adminOnlyRoutes = ["/dashboard", "/logs", "/operators"];
 
 function isProtectedPath(pathname: string) {
   return protectedRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`));
@@ -13,18 +13,19 @@ function isAdminOnlyPath(pathname: string) {
   return adminOnlyRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`));
 }
 
-function getRole(value: string | undefined) {
-  if (value === "admin" || value === "operator") {
-    return value;
-  }
-
+function parseSession(value: string | undefined): { role: "admin" | "operator"; instanceId?: string } | null {
+  if (!value) return null;
+  const [role, instanceId] = value.split("|");
+  if (role === "admin") return { role: "admin" };
+  if (role === "operator") return { role: "operator", instanceId: instanceId || undefined };
   return null;
 }
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const role = getRole(request.cookies.get(AUTH_COOKIE_NAME)?.value);
-  const hasSession = role !== null;
+  const session = parseSession(request.cookies.get(AUTH_COOKIE_NAME)?.value);
+  const hasSession = session !== null;
+  const role = session?.role ?? null;
 
   // Forward pathname as a request header so server components can read it via headers()
   const requestHeaders = new Headers(request.headers);
@@ -40,8 +41,16 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(payUrl);
   }
 
+  // Operator can only access their own instance's payment page
+  if (hasSession && role === "operator" && session?.instanceId) {
+    const instanceMatch = pathname.match(/^\/pay\/([^/]+)/);
+    if (instanceMatch && instanceMatch[1] !== session.instanceId) {
+      return NextResponse.redirect(new URL(`/pay/${session.instanceId}`, request.url));
+    }
+  }
+
   if (pathname === "/login" && hasSession) {
-    const redirectUrl = new URL(role === "admin" ? "/dashboard" : "/pay", request.url);
+    const redirectUrl = new URL(role === "admin" ? "/dashboard" : `/pay/${session?.instanceId ?? ""}`, request.url);
     return NextResponse.redirect(redirectUrl);
   }
 
