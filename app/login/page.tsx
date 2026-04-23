@@ -68,7 +68,7 @@ export default function LoginPage() {
               id="email"
               name="email"
               type="email"
-              placeholder="admin@paygoat.com"
+              placeholder="example@example.com"
               className="h-11 w-full rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] px-4 text-sm text-[var(--foreground)] outline-none transition focus:border-[var(--accent)]"
               required
               value={email}
