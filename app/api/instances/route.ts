@@ -56,9 +56,9 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { name, idclPercent = 0, summary, entities, formFields = [], paymentTypes = [] } = body;
+    const { name, idclPercent = 0, summary, entities = [], formFields = [], paymentTypes = [] } = body;
 
-    if (!name || !summary || !Array.isArray(entities) || entities.length === 0) {
+    if (!name || !summary) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
@@ -102,9 +102,13 @@ export async function POST(request: NextRequest) {
       return data.data.split_code as string;
     }
 
-    // 1. Create instance-level Paystack split
-    const entitiesWithSubaccounts = await buildSubaccounts(entities);
-    const instanceSplitCode = await buildSplit(name, entitiesWithSubaccounts);
+    // 1. Create instance-level Paystack split (only if entities are provided)
+    let entitiesWithSubaccounts: any[] = [];
+    let instanceSplitCode = `no-split-${Date.now()}`;
+    if (Array.isArray(entities) && entities.length > 0) {
+      entitiesWithSubaccounts = await buildSubaccounts(entities);
+      instanceSplitCode = await buildSplit(name, entitiesWithSubaccounts);
+    }
 
     // 2. For payment types that define their own entities, create per-type splits
     const paymentTypesResolved = await Promise.all(

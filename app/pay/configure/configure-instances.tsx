@@ -35,14 +35,12 @@ export function ConfigureInstances() {
     const [createInstance, { isLoading: isCreating }] = useCreateInstanceMutation();
 
     const [instanceName, setInstanceName] = useState("");
-    const [entities, setEntities] = useState<PaymentEntity[]>([]);
     const [paymentTypes, setPaymentTypes] = useState<PaymentTypeInput[]>([]);
     const [formFields, setFormFields] = useState<FormFieldInput[]>([]);
     const [banks, setBanks] = useState<Bank[]>([]);
     const [banksLoading, setBanksLoading] = useState(false);
-    const [resolveState, setResolveState] = useState<Record<number, { loading: boolean; error: string }>>({})
-    const [ptResolveState, setPtResolveState] = useState<Record<string, { loading: boolean; error: string }>>({})
-    const [newCredentials, setNewCredentials] = useState<{ email: string; password: string; instanceName: string } | null>(null);;
+    const [ptResolveState, setPtResolveState] = useState<Record<string, { loading: boolean; error: string }>>({});
+    const [newCredentials, setNewCredentials] = useState<{ email: string; password: string; instanceName: string } | null>(null);
 
     useEffect(() => {
         setBanksLoading(true);
@@ -52,45 +50,6 @@ export function ConfigureInstances() {
             .catch(console.error)
             .finally(() => setBanksLoading(false));
     }, []);
-
-    async function resolveAccount(index: number, accountNumber: string, bankCode: string) {
-        if (accountNumber.length !== 10 || !bankCode) return;
-
-        setResolveState((prev) => ({ ...prev, [index]: { loading: true, error: "" } }));
-        // Clear previous name while resolving
-        setEntities((prev) => {
-            const updated = [...prev];
-            updated[index] = { ...updated[index], businessName: "" };
-            return updated;
-        });
-
-        try {
-            const res = await fetch(
-                `/api/paystack/resolve?account_number=${encodeURIComponent(accountNumber)}&bank_code=${encodeURIComponent(bankCode)}`,
-            );
-            const data = await res.json();
-
-            if (!res.ok) {
-                setResolveState((prev) => ({
-                    ...prev,
-                    [index]: { loading: false, error: data.error || "Account not found" },
-                }));
-                return;
-            }
-
-            setEntities((prev) => {
-                const updated = [...prev];
-                updated[index] = { ...updated[index], businessName: data.accountName };
-                return updated;
-            });
-            setResolveState((prev) => ({ ...prev, [index]: { loading: false, error: "" } }));
-        } catch {
-            setResolveState((prev) => ({
-                ...prev,
-                [index]: { loading: false, error: "Network error. Please try again." },
-            }));
-        }
-    }
 
     async function resolvePtAccount(ptKey: string, accountNumber: string, bankCode: string) {
         if (accountNumber.length !== 10 || !bankCode) return;
@@ -129,17 +88,6 @@ export function ConfigureInstances() {
 
         if (!trimmedName) return;
 
-        const totalPercentage = entities.reduce((sum, e) => sum + e.percentage, 0);
-        if (Math.abs(totalPercentage - 100) > 0.01) {
-            alert("Entity percentages must add up to 100%");
-            return;
-        }
-
-        if (entities.length === 0) {
-            alert("Please add at least one revenue split entity");
-            return;
-        }
-
         if (paymentTypes.length === 0) {
             alert("Please add at least one payment type (reason for payment)");
             return;
@@ -169,7 +117,7 @@ export function ConfigureInstances() {
                             ? f.options.split(",").map((o) => o.trim()).filter(Boolean)
                             : undefined,
                 })) as any,
-                entities: entities.map((e) => ({ ...e })),
+                entities: [] as any,
                 paymentTypes: paymentTypes.map((pt) => ({
                     name: pt.name.trim(),
                     description: pt.description.trim() || undefined,
@@ -188,10 +136,8 @@ export function ConfigureInstances() {
             }
 
             setInstanceName("");
-            setEntities([]);
             setPaymentTypes([]);
             setFormFields([]);
-            setResolveState({});
         } catch (error: any) {
             console.error("Error creating instance:", error);
             alert(error?.data?.error || error?.message || "Failed to create instance");
@@ -314,140 +260,6 @@ export function ConfigureInstances() {
                             className="h-10 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--accent)]"
                             required
                         />
-
-                        {/* Revenue Split Entities — each entity becomes a Paystack subaccount */}
-                        <div className="flex items-center justify-between">
-                            <label className="text-sm font-medium text-[var(--foreground)]">
-                                Revenue Split Entities
-                            </label>
-                            <button
-                                type="button"
-                                onClick={() => setEntities([...entities, { name: "", percentage: 0, businessName: "", accountNumber: "", bankCode: "" }])}
-                                className="text-xs font-semibold text-[var(--accent)] transition hover:underline"
-                            >
-                                + Add Entity
-                            </button>
-                        </div>
-
-                        <div className="space-y-3">
-                            {entities.map((entity, index) => (
-                                <div key={index} className="space-y-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3">
-                                    <div className="flex gap-2">
-                                        <input
-                                            value={entity.name}
-                                            onChange={(e) => {
-                                                const updated = [...entities];
-                                                updated[index].name = e.target.value;
-                                                setEntities(updated);
-                                            }}
-                                            placeholder="Entity name (e.g. MOT)"
-                                            className="h-9 flex-1 rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] px-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--accent)]"
-                                            required
-                                        />
-                                        <input
-                                            value={entity.percentage || ""}
-                                            onChange={(e) => {
-                                                const updated = [...entities];
-                                                updated[index].percentage = Number(e.target.value);
-                                                setEntities(updated);
-                                            }}
-                                            type="number"
-                                            min="0"
-                                            max="100"
-                                            step="0.01"
-                                            placeholder="%"
-                                            className="h-9 w-20 rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] px-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--accent)]"
-                                            required
-                                        />
-                                        {entities.length > 1 && (
-                                            <button
-                                                type="button"
-                                                onClick={() => setEntities(entities.filter((_, i) => i !== index))}
-                                                className="h-9 w-9 rounded-xl border border-[var(--danger)] text-[var(--danger)] transition hover:bg-[var(--danger)]/10"
-                                            >
-                                                ×
-                                            </button>
-                                        )}
-                                    </div>
-
-                                    <div className="flex gap-2">
-                                        <input
-                                            value={entity.accountNumber ?? ""}
-                                            onChange={(e) => {
-                                                const val = e.target.value.replace(/\D/g, "").slice(0, 10);
-                                                const updated = [...entities];
-                                                updated[index].accountNumber = val;
-                                                setEntities(updated);
-                                                resolveAccount(index, val, entity.bankCode ?? "");
-                                            }}
-                                            placeholder="Account number"
-                                            maxLength={10}
-                                            inputMode="numeric"
-                                            className="h-9 flex-1 rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] px-3 text-sm font-mono text-[var(--foreground)] outline-none focus:border-[var(--accent)]"
-                                            required
-                                        />
-                                        <select
-                                            value={entity.bankCode ?? ""}
-                                            onChange={(e) => {
-                                                const updated = [...entities];
-                                                updated[index].bankCode = e.target.value;
-                                                setEntities(updated);
-                                                resolveAccount(index, entity.accountNumber ?? "", e.target.value);
-                                            }}
-                                            required
-                                            className="h-9 flex-1 rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] px-2 text-sm text-[var(--foreground)] outline-none focus:border-[var(--accent)]"
-                                        >
-                                            <option value="">
-                                                {banksLoading ? "Loading banks..." : "Select bank"}
-                                            </option>
-                                            {banks.map((bank, index) => (
-                                                <option key={index} value={bank.code}>
-                                                    {bank.name}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    {/* Account name — auto-filled via Paystack resolve */}
-                                    <div className="relative">
-                                        <input
-                                            value={
-                                                resolveState[index]?.loading
-                                                    ? ""
-                                                    : (entity.businessName ?? "")
-                                            }
-                                            readOnly
-                                            placeholder={
-                                                resolveState[index]?.loading
-                                                    ? "Resolving account name…"
-                                                    : "Account name (auto-filled)"
-                                            }
-                                            className={`h-9 w-full rounded-xl border px-3 text-sm text-[var(--foreground)] outline-none cursor-not-allowed opacity-90 ${
-                                                resolveState[index]?.error
-                                                    ? "border-[var(--danger)] bg-[var(--danger)]/5"
-                                                    : entity.businessName
-                                                    ? "border-green-500 bg-green-50/30"
-                                                    : "border-[var(--border)] bg-[var(--surface-soft)]"
-                                            }`}
-                                            required
-                                        />
-                                        {resolveState[index]?.loading && (
-                                            <span className="absolute right-3 top-2 text-xs text-[var(--muted-foreground)] animate-pulse">
-                                                Resolving…
-                                            </span>
-                                        )}
-                                    </div>
-                                    {resolveState[index]?.error && (
-                                        <p className="text-xs text-[var(--danger)]">
-                                            ⚠ {resolveState[index].error}
-                                        </p>
-                                    )}
-                                </div>
-                            ))}
-                            <p className="text-xs text-[var(--muted-foreground)]">
-                                Total:{" "}
-                                {entities.reduce((sum, e) => sum + (e.percentage || 0), 0).toFixed(2)}% (must equal 100%)
-                            </p>
-                        </div>
 
                         {/* Payment Types */}
                         <div className="rounded-xl border-2 border-dashed border-[var(--accent)] bg-[var(--accent-soft)]/20 p-3">

@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useGetInstanceByIdQuery } from "@/lib/store/api/instancesApi";
 import { useGetCollectionsQuery } from "@/lib/store/api/collectionsApi";
+import type { PaymentCollection } from "@/lib/payment-store";
+import printReceipts from "@/utils/print-reciepts";
 
 type Person = {
   name: string;
@@ -11,7 +13,7 @@ type Person = {
   fields: Record<string, string>;
 };
 
-type Receipt = {
+export type Receipt = {
   index: number;
   name: string;
   email: string;
@@ -41,8 +43,29 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
   const [persons, setPersons] = useState<Person[]>([emptyPerson()]);
   const [isInitiating, setIsInitiating] = useState(false);
   const [receipts, setReceipts] = useState<Receipt[]>([]);
+  const [viewingCollection, setViewingCollection] = useState<PaymentCollection | null>(null);
 
   const paymentInFlight = useRef(false);
+
+  function buildReceiptsFromCollection(c: PaymentCollection): Receipt[] {
+    const qty = c.quantity || 1;
+    const unitAmt = c.amount / qty;
+    const rawPersons: Array<Record<string, string>> =
+      Array.isArray((c.metadata as any)?.persons) ? (c.metadata as any).persons : [{ name: c.payer }];
+    return rawPersons.map((p, i) => ({
+      index: i,
+      name: p.name ?? c.payer,
+      email: p.email ?? "",
+      fields: Object.fromEntries(Object.entries(p).filter(([k]) => k !== "name" && k !== "email")),
+      paymentType: c.paymentType ?? "",
+      unitAmount: unitAmt,
+      totalAmount: c.amount,
+      quantity: qty,
+      reference: c.paystackReference ?? "",
+      collectedAt: c.collectedAt,
+      instanceName: c.instanceName,
+    }));
+  }
 
   const selectedPaymentType = instance?.paymentTypes?.find((pt) => pt.id === selectedPaymentTypeId);
   const unitAmount = selectedPaymentType?.amount || 0;
@@ -244,7 +267,7 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
     return (
       <>
         {/* Screen view */}
-        <div className="no-print space-y-5">
+        <div className="space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h1 className="text-2xl font-semibold text-[var(--foreground)]">Payment Successful</h1>
@@ -254,7 +277,7 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
             </div>
             <div className="flex gap-2">
               <button
-                onClick={() => window.print()}
+                onClick={() => printReceipts(receipts)}
                 className="rounded-xl border border-[var(--accent)] px-4 py-2 text-sm font-semibold text-[var(--accent)] transition hover:bg-[var(--accent-soft)]"
               >
                 Print All Receipts
@@ -290,40 +313,6 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
               </div>
             ))}
           </div>
-        </div>
-
-        {/* Print-only receipts — POS 80mm paper */}
-        <div className="print-only">
-          {receipts.map((r) => (
-            <div key={r.index} className="receipt-slip">
-              <div className="receipt-header">
-                <p className="receipt-title">{r.instanceName}</p>
-                <p className="receipt-sub">{r.paymentType}</p>
-              </div>
-              <div className="receipt-divider" />
-              <table className="receipt-table">
-                <tbody>
-                  <tr><td>Name</td><td>{r.name}</td></tr>
-                  <tr><td>Email</td><td>{r.email}</td></tr>
-                  {Object.entries(r.fields).map(([k, v]) => (
-                    <tr key={k}><td>{k}</td><td>{v}</td></tr>
-                  ))}
-                </tbody>
-              </table>
-              <div className="receipt-divider" />
-              <div className="receipt-amount">
-                <span>Amount Paid</span>
-                <span>₦{r.unitAmount.toLocaleString("en-NG", { minimumFractionDigits: 2 })}</span>
-              </div>
-              {r.quantity > 1 && (
-                <p className="receipt-note">Person {r.index + 1} of {r.quantity} · Total ₦{r.totalAmount.toLocaleString("en-NG", { minimumFractionDigits: 2 })}</p>
-              )}
-              <div className="receipt-divider" />
-              <p className="receipt-ref">Ref: {r.reference}</p>
-              <p className="receipt-date">{r.collectedAt}</p>
-              <p className="receipt-footer">Thank you</p>
-            </div>
-          ))}
         </div>
       </>
     );
@@ -459,17 +448,26 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
                   <th className="px-3 py-2">Payer</th>
                   <th className="px-3 py-2">Amount</th>
                   <th className="px-3 py-2">Collected</th>
+                  <th className="px-3 py-2"></th>
                 </tr>
               </thead>
               <tbody>
                 {instanceCollections.length === 0 ? (
-                  <tr><td colSpan={3} className="px-3 py-6 text-center text-[var(--muted-foreground)]">No payments collected yet.</td></tr>
+                  <tr><td colSpan={4} className="px-3 py-6 text-center text-[var(--muted-foreground)]">No payments collected yet.</td></tr>
                 ) : (
                   instanceCollections.map((c) => (
                     <tr key={c.id} className="border-t border-[var(--border)] text-[var(--foreground)]">
                       <td className="px-3 py-3 font-medium">{c.payer}</td>
                       <td className="px-3 py-3">₦{c.amount.toLocaleString("en-NG", { minimumFractionDigits: 2 })}</td>
                       <td className="px-3 py-3 text-[var(--muted-foreground)]">{c.collectedAt}</td>
+                      <td className="px-3 py-3">
+                        <button
+                          onClick={() => setViewingCollection(c)}
+                          className="rounded-lg border border-[var(--border)] px-2 py-1 text-xs font-semibold text-[var(--accent)] transition hover:bg-[var(--accent-soft)]"
+                        >
+                          View
+                        </button>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -477,6 +475,108 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
             </table>
           </div>
         </section>
+
+        {/* Collection detail modal */}
+        {viewingCollection && (
+          <div
+            className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center"
+            onClick={() => setViewingCollection(null)}
+          >
+            <div
+              className="w-full max-w-lg rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4">
+                <div>
+                  <p className="text-base font-bold text-[var(--foreground)]">{viewingCollection.payer}</p>
+                  <p className="text-xs text-[var(--muted-foreground)]">
+                    {viewingCollection.paymentType} · {viewingCollection.collectedAt}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setViewingCollection(null)}
+                  className="text-2xl leading-none text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                >
+                  ×
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="max-h-[60vh] overflow-y-auto px-5 py-4 space-y-4">
+                {/* Summary */}
+                <div className="flex flex-wrap gap-3">
+                  <div className="flex-1 min-w-[100px] rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-2">
+                    <p className="text-xs text-[var(--muted-foreground)]">Amount</p>
+                    <p className="mt-0.5 font-bold text-[var(--accent)]">
+                      ₦{viewingCollection.amount.toLocaleString("en-NG", { minimumFractionDigits: 2 })}
+                    </p>
+                  </div>
+                  {(viewingCollection.quantity ?? 1) > 1 && (
+                    <div className="flex-1 min-w-[80px] rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-2">
+                      <p className="text-xs text-[var(--muted-foreground)]">People</p>
+                      <p className="mt-0.5 font-bold text-[var(--foreground)]">{viewingCollection.quantity}</p>
+                    </div>
+                  )}
+                  {viewingCollection.paystackReference && (
+                    <div className="flex-1 min-w-[120px] rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-2 overflow-hidden">
+                      <p className="text-xs text-[var(--muted-foreground)]">Reference</p>
+                      <p className="mt-0.5 truncate font-mono text-xs text-[var(--foreground)]">
+                        {viewingCollection.paystackReference}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Per-person details */}
+                {Array.isArray((viewingCollection.metadata as any)?.persons) && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
+                      Payer Details
+                    </p>
+                    {((viewingCollection.metadata as any).persons as Array<Record<string, string>>).map((p, i) => (
+                      <div key={i} className="rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] p-3">
+                        <p className="text-sm font-semibold text-[var(--foreground)]">
+                          {(viewingCollection.quantity ?? 1) > 1 && (
+                            <span className="mr-2 text-xs font-normal text-[var(--muted-foreground)]">#{i + 1}</span>
+                          )}
+                          {p.name}
+                        </p>
+                        {p.email && <p className="text-xs text-[var(--muted-foreground)]">{p.email}</p>}
+                        {Object.entries(p)
+                          .filter(([k]) => k !== "name" && k !== "email")
+                          .map(([k, v]) => (
+                            <p key={k} className="mt-0.5 text-xs text-[var(--foreground)]">
+                              <span className="text-[var(--muted-foreground)]">{k}:</span> {v}
+                            </p>
+                          ))}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="flex gap-2 border-t border-[var(--border)] px-5 py-4">
+                <button
+                  onClick={() => setViewingCollection(null)}
+                  className="h-10 flex-1 rounded-xl border border-[var(--border)] text-sm font-semibold text-[var(--foreground)] transition hover:bg-[var(--surface-soft)]"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => {
+                    const built = buildReceiptsFromCollection(viewingCollection);
+                    printReceipts(built);
+                  }}
+                  className="h-10 flex-[2] rounded-xl bg-[var(--accent)] text-sm font-semibold text-white transition hover:brightness-95"
+                >
+                  Reprint Receipt
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </>
     );
   }
