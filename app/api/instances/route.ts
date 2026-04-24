@@ -148,7 +148,7 @@ export async function POST(request: NextRequest) {
     // 4. Auto-generate a dedicated operator account for this instance
     const slug = name.toLowerCase().replace(/\s+/g, "").slice(0, 12);
     const suffix = instance.id.slice(-5);
-    const operatorEmail = `${slug}.${suffix}@paygoat.op`;
+    const operatorEmail = `${slug}.${suffix}@paygoat.com`;
     const rawPassword = Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
     const hashedPassword = await bcrypt.hash(rawPassword, 10);
 
