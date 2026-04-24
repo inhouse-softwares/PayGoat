@@ -265,56 +265,57 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
   // ─── RECEIPTS STEP ────────────────────────────────────────────────────────
   if (step === "receipts") {
     return (
-      <>
-        {/* Screen view */}
-        <div className="space-y-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h1 className="text-2xl font-semibold text-[var(--foreground)]">Payment Successful</h1>
-              <p className="mt-1 text-sm text-[var(--muted-foreground)]">
-                {receipts.length} receipt{receipts.length > 1 ? "s" : ""} ready — ₦{receipts[0]?.totalAmount.toLocaleString("en-NG", { minimumFractionDigits: 2 })} total
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => printReceipts(receipts)}
-                className="rounded-xl border border-[var(--accent)] px-4 py-2 text-sm font-semibold text-[var(--accent)] transition hover:bg-[var(--accent-soft)]"
-              >
-                Print All Receipts
-              </button>
-              <button
-                onClick={handleNewPayment}
-                className="rounded-xl bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white transition hover:brightness-95"
-              >
-                New Payment
-              </button>
-            </div>
+      <div className="space-y-5">
+        {/* Header row */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-xl font-semibold text-[var(--foreground)] sm:text-2xl">Payment Successful</h1>
+            <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+              {receipts.length} receipt{receipts.length > 1 ? "s" : ""} ready — ₦{receipts[0]?.totalAmount.toLocaleString("en-NG", { minimumFractionDigits: 2 })} total
+            </p>
           </div>
-
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {receipts.map((r) => (
-              <div key={r.index} className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">Person {r.index + 1}</span>
-                  <span className="text-xs font-mono text-[var(--muted-foreground)]">{r.reference.slice(-10)}</span>
-                </div>
-                <p className="mt-2 text-base font-bold text-[var(--foreground)]">{r.name}</p>
-                <p className="text-xs text-[var(--muted-foreground)]">{r.email}</p>
-                {Object.entries(r.fields).map(([k, v]) => (
-                  <p key={k} className="mt-1 text-xs text-[var(--foreground)]"><span className="text-[var(--muted-foreground)]">{k}:</span> {v}</p>
-                ))}
-                <div className="mt-3 border-t border-[var(--border)] pt-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-[var(--muted-foreground)]">{r.paymentType}</span>
-                    <span className="font-bold text-[var(--accent)]">₦{r.unitAmount.toLocaleString("en-NG", { minimumFractionDigits: 2 })}</span>
-                  </div>
-                  <p className="mt-1 text-xs text-[var(--muted-foreground)]">{r.collectedAt}</p>
-                </div>
-              </div>
-            ))}
+          <div className="flex gap-2">
+            <button
+              onClick={() => printReceipts(receipts)}
+              className="flex-1 rounded-xl border border-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-[var(--accent)] transition hover:bg-[var(--accent-soft)] sm:flex-none"
+            >
+              🖨 Print Receipts
+            </button>
+            <button
+              onClick={handleNewPayment}
+              className="flex-1 rounded-xl bg-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-95 sm:flex-none"
+            >
+              New Payment
+            </button>
           </div>
         </div>
-      </>
+
+        {/* Receipt cards grid */}
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {receipts.map((r) => (
+            <div key={r.index} className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
+              <div className="flex items-center justify-between">
+                <span className="rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-xs font-semibold text-[var(--accent)]">
+                  Person {r.index + 1}{receipts.length > 1 ? ` of ${receipts.length}` : ""}
+                </span>
+                <span className="font-mono text-xs text-[var(--muted-foreground)]">{r.reference.slice(-10)}</span>
+              </div>
+              <p className="mt-3 text-base font-bold text-[var(--foreground)]">{r.name}</p>
+              <p className="text-xs text-[var(--muted-foreground)]">{r.email}</p>
+              {Object.entries(r.fields).map(([k, v]) => (
+                <p key={k} className="mt-1 text-xs text-[var(--foreground)]">
+                  <span className="text-[var(--muted-foreground)]">{k}:</span> {v}
+                </p>
+              ))}
+              <div className="mt-3 flex items-center justify-between border-t border-[var(--border)] pt-3">
+                <span className="text-sm text-[var(--muted-foreground)]">{r.paymentType}</span>
+                <span className="font-bold text-[var(--accent)]">₦{r.unitAmount.toLocaleString("en-NG", { minimumFractionDigits: 2 })}</span>
+              </div>
+              <p className="mt-1 text-xs text-[var(--muted-foreground)]">{r.collectedAt}</p>
+            </div>
+          ))}
+        </div>
+      </div>
     );
   }
 
@@ -322,126 +323,138 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
   if (step === "reason") {
     return (
       <>
-        <div className="flex flex-wrap items-start justify-between gap-3">
+        {/* Page header */}
+        <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
-            <Link href="/pay" className="text-sm font-medium text-[var(--accent)]">← Back to Instances</Link>
-            <h1 className="mt-2 text-2xl font-semibold text-[var(--foreground)]">{instance.name} Payments</h1>
+            <Link href="/pay" className="text-sm font-medium text-[var(--accent)]">← Instances</Link>
+            <h1 className="mt-1 text-xl font-semibold text-[var(--foreground)] sm:text-2xl">{instance.name}</h1>
           </div>
-          <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-sm font-semibold text-[var(--accent)]">{instance.splitCode}</span>
+          <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--accent)] truncate max-w-[160px] sm:max-w-none">{instance.splitCode}</span>
         </div>
 
-        <section className="mt-6 grid gap-4 lg:grid-cols-[1fr_300px]">
-          <article className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-5">
-
-            {/* Step 1: Payment Reason */}
-            <div>
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">Step 1 — Payment Reason</p>
-              {instance.paymentTypes && instance.paymentTypes.length > 0 ? (
-                <div className="space-y-2">
-                  {instance.paymentTypes.map((pt) => (
-                    <label
-                      key={pt.id}
-                      className={`flex cursor-pointer items-start gap-3 rounded-xl border-2 p-3 transition ${
-                        selectedPaymentTypeId === pt.id
-                          ? "border-[var(--accent)] bg-[var(--accent-soft)]/30"
-                          : "border-[var(--border)] bg-[var(--surface)] hover:border-[var(--accent)]/50"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="paymentType"
-                        value={pt.id}
-                        checked={selectedPaymentTypeId === pt.id}
-                        onChange={(e) => { setSelectedPaymentTypeId(e.target.value); setQuantity(1); }}
-                        className="mt-1 h-4 w-4 accent-[var(--accent)]"
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="font-semibold text-[var(--foreground)]">{pt.name}</p>
-                          <p className="font-bold text-[var(--accent)]">₦{pt.amount.toLocaleString("en-NG", { minimumFractionDigits: 2 })} / person</p>
-                        </div>
-                        {pt.description && <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">{pt.description}</p>}
+        <div className="mt-5 space-y-4">
+          {/* Step 1: Payment Reason */}
+          <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4 sm:p-5">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">Step 1 — Payment Reason</p>
+            {instance.paymentTypes && instance.paymentTypes.length > 0 ? (
+              <div className="space-y-2">
+                {instance.paymentTypes.map((pt) => (
+                  <label
+                    key={pt.id}
+                    className={`flex cursor-pointer items-start gap-3 rounded-xl border-2 p-3 transition ${
+                      selectedPaymentTypeId === pt.id
+                        ? "border-[var(--accent)] bg-[var(--accent-soft)]/30"
+                        : "border-[var(--border)] bg-[var(--surface)] hover:border-[var(--accent)]/50"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="paymentType"
+                      value={pt.id}
+                      checked={selectedPaymentTypeId === pt.id}
+                      onChange={(e) => { setSelectedPaymentTypeId(e.target.value); setQuantity(1); }}
+                      className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--accent)]"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center justify-between gap-1">
+                        <p className="font-semibold text-[var(--foreground)]">{pt.name}</p>
+                        <p className="font-bold text-[var(--accent)]">₦{pt.amount.toLocaleString("en-NG", { minimumFractionDigits: 2 })}<span className="ml-0.5 text-xs font-normal text-[var(--muted-foreground)]">/person</span></p>
                       </div>
-                    </label>
-                  ))}
-                </div>
-              ) : (
-                <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 text-center">
-                  <p className="text-sm text-[var(--muted-foreground)]">No payment types configured. Contact your administrator.</p>
-                </div>
-              )}
-            </div>
+                      {pt.description && <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">{pt.description}</p>}
+                    </div>
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <p className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 text-center text-sm text-[var(--muted-foreground)]">
+                No payment types configured. Contact your administrator.
+              </p>
+            )}
+          </div>
 
-            {/* Step 2: Number of people — only shown after reason is selected */}
-            {selectedPaymentType && (
-              <div className="mt-6">
-                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">Step 2 — Number of People</p>
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                    disabled={quantity <= 1}
-                    className="h-11 w-11 rounded-xl border border-[var(--border)] bg-[var(--surface)] text-xl font-bold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:opacity-40"
-                  >−</button>
-                  <input
-                    type="number"
-                    min="1"
-                    max="100"
-                    value={quantity}
-                    onChange={(e) => setQuantity(Math.max(1, Math.min(100, Number(e.target.value) || 1)))}
-                    className="h-11 w-20 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-center text-sm font-semibold text-[var(--foreground)] outline-none focus:border-[var(--accent)]"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setQuantity((q) => Math.min(100, q + 1))}
-                    className="h-11 w-11 rounded-xl border border-[var(--border)] bg-[var(--surface)] text-xl font-bold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
-                  >+</button>
-                  <div className="flex-1 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-2 text-right">
-                    <p className="text-xs text-[var(--muted-foreground)]">Total</p>
-                    <p className="text-lg font-bold text-[var(--accent)]">₦{totalAmount.toLocaleString("en-NG", { minimumFractionDigits: 2 })}</p>
-                  </div>
-                </div>
-                {quantity > 1 && (
-                  <p className="mt-2 text-xs text-[var(--muted-foreground)]">
-                    {quantity} × ₦{unitAmount.toLocaleString("en-NG", { minimumFractionDigits: 2 })} — one charge covers all {quantity} people
-                  </p>
-                )}
-
+          {/* Step 2: Number of people — only shown after reason is selected */}
+          {selectedPaymentType && (
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4 sm:p-5">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">Step 2 — Number of People</p>
+              <div className="flex items-center gap-2 sm:gap-3">
                 <button
                   type="button"
-                  onClick={handleContinueToDetails}
-                  className="mt-5 h-12 w-full rounded-xl bg-[var(--accent)] text-sm font-semibold text-white transition hover:brightness-95"
-                >
-                  Continue — Fill In {quantity === 1 ? "Details" : `Details for ${quantity} People`} →
-                </button>
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  disabled={quantity <= 1}
+                  className="h-12 w-12 shrink-0 rounded-xl border border-[var(--border)] bg-[var(--surface)] text-xl font-bold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:opacity-40"
+                >−</button>
+                <input
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={quantity}
+                  onChange={(e) => setQuantity(Math.max(1, Math.min(100, Number(e.target.value) || 1)))}
+                  className="h-12 w-16 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-2 text-center text-base font-semibold text-[var(--foreground)] outline-none focus:border-[var(--accent)] sm:w-20"
+                />
+                <button
+                  type="button"
+                  onClick={() => setQuantity((q) => Math.min(100, q + 1))}
+                  className="h-12 w-12 shrink-0 rounded-xl border border-[var(--border)] bg-[var(--surface)] text-xl font-bold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                >+</button>
+                <div className="min-w-0 flex-1 rounded-xl border border-[var(--accent-soft)] bg-[var(--accent-soft)]/20 px-3 py-2 text-right">
+                  <p className="text-xs text-[var(--muted-foreground)]">Total</p>
+                  <p className="text-lg font-bold text-[var(--accent)] sm:text-xl">₦{totalAmount.toLocaleString("en-NG", { minimumFractionDigits: 2 })}</p>
+                </div>
               </div>
-            )}
-          </article>
-
-          <article className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4">
-            <h2 className="text-lg font-semibold text-[var(--foreground)]">Instance</h2>
-            <div className="mt-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3">
-              <p className="text-xs uppercase tracking-wide text-[var(--muted-foreground)]">Name</p>
-              <p className="mt-1 font-semibold text-[var(--foreground)]">{instance.name}</p>
+              {quantity > 1 && (
+                <p className="mt-2 text-xs text-[var(--muted-foreground)]">
+                  {quantity} × ₦{unitAmount.toLocaleString("en-NG", { minimumFractionDigits: 2 })} — one charge covers all {quantity} people
+                </p>
+              )}
+              <button
+                type="button"
+                onClick={handleContinueToDetails}
+                className="mt-4 h-12 w-full rounded-xl bg-[var(--accent)] text-sm font-semibold text-white transition hover:brightness-95 active:scale-[0.98]"
+              >
+                Continue — {quantity === 1 ? "Fill In Details" : `Details for ${quantity} People`} →
+              </button>
             </div>
-          </article>
-        </section>
+          )}
+        </div>
 
         {/* Recent Collections */}
-        <section className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+        <section className="mt-5 rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h2 className="text-lg font-semibold text-[var(--foreground)]">Recent Collections</h2>
-              <p className="mt-1 text-sm text-[var(--muted-foreground)]">Latest payments accepted under this instance.</p>
+              <h2 className="text-base font-semibold text-[var(--foreground)] sm:text-lg">Recent Collections</h2>
+              <p className="mt-0.5 text-xs text-[var(--muted-foreground)] sm:text-sm">Latest payments under this instance.</p>
             </div>
-            <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-right">
-              <p className="text-xs uppercase tracking-wide text-[var(--muted-foreground)]">Total Collected</p>
-              <p className="mt-1 text-xl font-semibold text-[var(--foreground)]">
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-right">
+              <p className="text-xs uppercase tracking-wide text-[var(--muted-foreground)]">Total</p>
+              <p className="text-base font-semibold text-[var(--foreground)] sm:text-xl">
                 ₦{collections.filter((c) => c.instanceId === instanceId).reduce((s, c) => s + c.amount, 0).toLocaleString("en-NG", { minimumFractionDigits: 2 })}
               </p>
             </div>
           </div>
-          <div className="mt-4 overflow-x-auto rounded-xl border border-[var(--border)] bg-[var(--surface)]">
+
+          {/* Mobile-friendly list */}
+          <div className="mt-4 space-y-2 sm:hidden">
+            {instanceCollections.length === 0 ? (
+              <p className="py-4 text-center text-sm text-[var(--muted-foreground)]">No payments collected yet.</p>
+            ) : instanceCollections.map((c) => (
+              <div key={c.id} className="flex items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 py-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-[var(--foreground)]">{c.payer}</p>
+                  <p className="text-xs text-[var(--muted-foreground)]">{c.collectedAt}</p>
+                </div>
+                <div className="ml-3 flex shrink-0 items-center gap-2">
+                  <span className="font-semibold text-[var(--accent)]">₦{c.amount.toLocaleString("en-NG", { minimumFractionDigits: 2 })}</span>
+                  <button
+                    onClick={() => setViewingCollection(c)}
+                    className="rounded-lg border border-[var(--border)] px-2 py-1 text-xs font-semibold text-[var(--accent)] transition hover:bg-[var(--accent-soft)]"
+                  >View</button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table */}
+          <div className="mt-4 hidden overflow-x-auto rounded-xl border border-[var(--border)] bg-[var(--surface)] sm:block">
             <table className="min-w-full border-collapse text-sm">
               <thead className="bg-[var(--surface-alt)] text-left text-xs uppercase tracking-widest text-[var(--muted-foreground)]">
                 <tr>
@@ -464,9 +477,7 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
                         <button
                           onClick={() => setViewingCollection(c)}
                           className="rounded-lg border border-[var(--border)] px-2 py-1 text-xs font-semibold text-[var(--accent)] transition hover:bg-[var(--accent-soft)]"
-                        >
-                          View
-                        </button>
+                        >View</button>
                       </td>
                     </tr>
                   ))
@@ -487,53 +498,40 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-              <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4">
-                <div>
-                  <p className="text-base font-bold text-[var(--foreground)]">{viewingCollection.payer}</p>
+              <div className="flex items-start justify-between border-b border-[var(--border)] px-5 py-4">
+                <div className="min-w-0 pr-4">
+                  <p className="truncate text-base font-bold text-[var(--foreground)]">{viewingCollection.payer}</p>
                   <p className="text-xs text-[var(--muted-foreground)]">
                     {viewingCollection.paymentType} · {viewingCollection.collectedAt}
                   </p>
                 </div>
-                <button
-                  onClick={() => setViewingCollection(null)}
-                  className="text-2xl leading-none text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
-                >
-                  ×
-                </button>
+                <button onClick={() => setViewingCollection(null)} className="shrink-0 text-2xl leading-none text-[var(--muted-foreground)] hover:text-[var(--foreground)]">×</button>
               </div>
 
               {/* Body */}
-              <div className="max-h-[60vh] overflow-y-auto px-5 py-4 space-y-4">
-                {/* Summary */}
-                <div className="flex flex-wrap gap-3">
-                  <div className="flex-1 min-w-[100px] rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-2">
+              <div className="max-h-[55vh] overflow-y-auto px-5 py-4 space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  <div className="flex-1 min-w-[90px] rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-2">
                     <p className="text-xs text-[var(--muted-foreground)]">Amount</p>
-                    <p className="mt-0.5 font-bold text-[var(--accent)]">
-                      ₦{viewingCollection.amount.toLocaleString("en-NG", { minimumFractionDigits: 2 })}
-                    </p>
+                    <p className="mt-0.5 font-bold text-[var(--accent)]">₦{viewingCollection.amount.toLocaleString("en-NG", { minimumFractionDigits: 2 })}</p>
                   </div>
                   {(viewingCollection.quantity ?? 1) > 1 && (
-                    <div className="flex-1 min-w-[80px] rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-2">
+                    <div className="flex-1 min-w-[70px] rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-2">
                       <p className="text-xs text-[var(--muted-foreground)]">People</p>
                       <p className="mt-0.5 font-bold text-[var(--foreground)]">{viewingCollection.quantity}</p>
                     </div>
                   )}
                   {viewingCollection.paystackReference && (
-                    <div className="flex-1 min-w-[120px] rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-2 overflow-hidden">
+                    <div className="flex-1 min-w-[110px] rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-2 overflow-hidden">
                       <p className="text-xs text-[var(--muted-foreground)]">Reference</p>
-                      <p className="mt-0.5 truncate font-mono text-xs text-[var(--foreground)]">
-                        {viewingCollection.paystackReference}
-                      </p>
+                      <p className="mt-0.5 truncate font-mono text-xs text-[var(--foreground)]">{viewingCollection.paystackReference}</p>
                     </div>
                   )}
                 </div>
 
-                {/* Per-person details */}
                 {Array.isArray((viewingCollection.metadata as any)?.persons) && (
                   <div className="space-y-2">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
-                      Payer Details
-                    </p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">Payer Details</p>
                     {((viewingCollection.metadata as any).persons as Array<Record<string, string>>).map((p, i) => (
                       <div key={i} className="rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] p-3">
                         <p className="text-sm font-semibold text-[var(--foreground)]">
@@ -543,13 +541,11 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
                           {p.name}
                         </p>
                         {p.email && <p className="text-xs text-[var(--muted-foreground)]">{p.email}</p>}
-                        {Object.entries(p)
-                          .filter(([k]) => k !== "name" && k !== "email")
-                          .map(([k, v]) => (
-                            <p key={k} className="mt-0.5 text-xs text-[var(--foreground)]">
-                              <span className="text-[var(--muted-foreground)]">{k}:</span> {v}
-                            </p>
-                          ))}
+                        {Object.entries(p).filter(([k]) => k !== "name" && k !== "email").map(([k, v]) => (
+                          <p key={k} className="mt-0.5 text-xs text-[var(--foreground)]">
+                            <span className="text-[var(--muted-foreground)]">{k}:</span> {v}
+                          </p>
+                        ))}
                       </div>
                     ))}
                   </div>
@@ -558,20 +554,14 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
 
               {/* Footer */}
               <div className="flex gap-2 border-t border-[var(--border)] px-5 py-4">
-                <button
-                  onClick={() => setViewingCollection(null)}
-                  className="h-10 flex-1 rounded-xl border border-[var(--border)] text-sm font-semibold text-[var(--foreground)] transition hover:bg-[var(--surface-soft)]"
-                >
+                <button onClick={() => setViewingCollection(null)} className="h-11 flex-1 rounded-xl border border-[var(--border)] text-sm font-semibold text-[var(--foreground)] transition hover:bg-[var(--surface-soft)]">
                   Close
                 </button>
                 <button
-                  onClick={() => {
-                    const built = buildReceiptsFromCollection(viewingCollection);
-                    printReceipts(built);
-                  }}
-                  className="h-10 flex-[2] rounded-xl bg-[var(--accent)] text-sm font-semibold text-white transition hover:brightness-95"
+                  onClick={() => { printReceipts(buildReceiptsFromCollection(viewingCollection)); }}
+                  className="h-11 flex-[2] rounded-xl bg-[var(--accent)] text-sm font-semibold text-white transition hover:brightness-95"
                 >
-                  Reprint Receipt
+                  🖨 Reprint Receipt
                 </button>
               </div>
             </div>
@@ -584,32 +574,45 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
   // ─── DETAILS STEP (per-person forms) ─────────────────────────────────────
   return (
     <>
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      {/* Header */}
+      <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <button
-            type="button"
-            onClick={() => setStep("reason")}
-            className="text-sm font-medium text-[var(--accent)]"
-          >
-            ← Back
-          </button>
-          <h1 className="mt-2 text-2xl font-semibold text-[var(--foreground)]">{instance.name} — Payer Details</h1>
-          <p className="mt-1 text-sm text-[var(--muted-foreground)]">
-            {selectedPaymentType?.name} · {quantity} {quantity === 1 ? "person" : "people"} · ₦{totalAmount.toLocaleString("en-NG", { minimumFractionDigits: 2 })} total
+          <button type="button" onClick={() => setStep("reason")} className="text-sm font-medium text-[var(--accent)]">← Back</button>
+          <h1 className="mt-1 text-xl font-semibold text-[var(--foreground)] sm:text-2xl">{instance.name}</h1>
+          <p className="mt-0.5 text-xs text-[var(--muted-foreground)] sm:text-sm">
+            {selectedPaymentType?.name} · {quantity} {quantity === 1 ? "person" : "people"}
           </p>
         </div>
-        <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-sm font-semibold text-[var(--accent)]">
-          ₦{unitAmount.toLocaleString("en-NG", { minimumFractionDigits: 2 })} / person
-        </span>
+        <div className="rounded-xl border border-[var(--accent-soft)] bg-[var(--accent-soft)]/20 px-3 py-2 text-right">
+          <p className="text-xs text-[var(--muted-foreground)]">Total</p>
+          <p className="font-bold text-[var(--accent)]">₦{totalAmount.toLocaleString("en-NG", { minimumFractionDigits: 2 })}</p>
+        </div>
       </div>
 
-      <div className="mt-6 space-y-4">
+      {/* Progress bar for multi-person */}
+      {quantity > 1 && (
+        <div className="mt-3 flex gap-1">
+          {Array.from({ length: quantity }).map((_, i) => (
+            <div
+              key={i}
+              className="h-1.5 flex-1 rounded-full"
+              style={{ background: persons[i]?.name ? "var(--accent)" : "var(--border)" }}
+            />
+          ))}
+        </div>
+      )}
+
+      <div className="mt-4 space-y-3 pb-28 sm:pb-4">
         {persons.map((person, i) => (
           <div key={i} className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4">
-            <p className="mb-3 text-sm font-bold text-[var(--foreground)]">
-              Person {i + 1}
-              {quantity > 1 && <span className="ml-2 text-xs font-normal text-[var(--muted-foreground)]">of {quantity}</span>}
-            </p>
+            <div className="mb-3 flex items-center gap-2">
+              <span className="rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs font-semibold text-[var(--accent)]">
+                Person {i + 1}{quantity > 1 ? ` of ${quantity}` : ""}
+              </span>
+              {quantity > 1 && (
+                <span className="text-xs text-[var(--muted-foreground)]">₦{unitAmount.toLocaleString("en-NG", { minimumFractionDigits: 2 })}</span>
+              )}
+            </div>
             <div className="space-y-2">
               <input
                 value={person.name}
@@ -621,7 +624,7 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
                 type="email"
                 value={person.email}
                 onChange={(e) => updatePerson(i, { email: e.target.value })}
-                placeholder="Email address"
+                placeholder="Email address (optional)"
                 className="h-11 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--accent)]"
               />
               {instance.formFields && instance.formFields.length > 0 && instance.formFields.map((field) => (
@@ -654,11 +657,12 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
         ))}
       </div>
 
-      <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+      {/* Sticky action footer */}
+      <div className="fixed bottom-0 left-0 right-0 flex gap-3 border-t border-[var(--border)] bg-[var(--surface)]/95 p-4 backdrop-blur-sm sm:relative sm:border-0 sm:bg-transparent sm:p-0 sm:pt-4 sm:backdrop-blur-none">
         <button
           type="button"
           onClick={() => setStep("reason")}
-          className="h-12 flex-1 rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] text-sm font-semibold text-[var(--foreground)] transition hover:bg-[var(--border)]"
+          className="h-12 flex-1 rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] text-sm font-semibold text-[var(--foreground)] transition hover:bg-[var(--border)] sm:flex-none sm:px-6"
         >
           ← Back
         </button>
@@ -666,11 +670,11 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
           type="button"
           onClick={handleProceedToPayment}
           disabled={isInitiating}
-          className="h-12 flex-[2] rounded-xl bg-[var(--accent)] text-sm font-semibold text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
+          className="h-12 flex-[3] rounded-xl bg-[var(--accent)] text-sm font-semibold text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isInitiating
-            ? "Initiating Payment…"
-            : `Pay ₦${totalAmount.toLocaleString("en-NG", { minimumFractionDigits: 2 })} for ${quantity === 1 ? "1 person" : `${quantity} people`}`}
+            ? "Initiating…"
+            : `Pay ₦${totalAmount.toLocaleString("en-NG", { minimumFractionDigits: 2 })}`}
         </button>
       </div>
     </>

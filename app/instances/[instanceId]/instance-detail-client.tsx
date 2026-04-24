@@ -127,61 +127,52 @@ export function InstanceDetailClient({ instanceId }: { instanceId: string }) {
 
   return (
     <>
-      <div className="space-y-5 p-15">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-3">
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
               <Link
                 href="/pay"
                 className="text-[var(--muted-foreground)] transition hover:text-[var(--foreground)]"
               >
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 19l-7-7 7-7"
-                  />
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                 </svg>
               </Link>
-              <h1 className="text-2xl font-semibold text-[var(--foreground)]">
+              <h1 className="text-xl font-semibold text-[var(--foreground)] sm:text-2xl">
                 {instance.name}
               </h1>
-              <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--accent)]">
+              <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--accent)] max-w-[160px] truncate sm:max-w-none">
                 {instance.splitCode}
               </span>
             </div>
-            <p className="mt-2 text-sm text-[var(--muted-foreground)]">
+            <p className="mt-1.5 text-sm text-[var(--muted-foreground)]">
               {instance.summary}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <button
               onClick={openEdit}
-              className="rounded-xl border border-[var(--border)] bg-[var(--surface-alt)] px-4 py-2 text-sm font-semibold text-[var(--foreground)] transition hover:bg-[var(--border)]"
+              className="rounded-xl border border-[var(--border)] bg-[var(--surface-alt)] px-3 py-2 text-sm font-semibold text-[var(--foreground)] transition hover:bg-[var(--border)] sm:px-4"
             >
               Edit
             </button>
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="rounded-xl border border-[var(--danger)] bg-[var(--danger)]/10 px-4 py-2 text-sm font-semibold text-[var(--danger)] transition hover:bg-[var(--danger)]/20"
+              className="rounded-xl border border-[var(--danger)] bg-[var(--danger)]/10 px-3 py-2 text-sm font-semibold text-[var(--danger)] transition hover:bg-[var(--danger)]/20 sm:px-4"
             >
-              Delete Instance
+              <span className="sm:hidden">Delete</span>
+              <span className="hidden sm:inline">Delete Instance</span>
             </button>
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-3 grid-cols-2 md:grid-cols-3">
           <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5">
             <p className="text-sm text-[var(--muted-foreground)]">
               Total Collected
             </p>
-            <p className="mt-2 text-3xl font-semibold text-[var(--foreground)]">
+            <p className="mt-1.5 text-2xl font-semibold text-[var(--foreground)] sm:text-3xl">
               ₦{totalCollected.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
             <p className="mt-1 text-xs text-[var(--muted-foreground)]">
@@ -197,7 +188,7 @@ export function InstanceDetailClient({ instanceId }: { instanceId: string }) {
               <p className="text-sm text-[var(--muted-foreground)]">
                 {entity.name} ({entity.percentage}%)
               </p>
-              <p className="mt-2 text-3xl font-semibold text-[var(--foreground)]">
+              <p className="mt-1.5 text-2xl font-semibold text-[var(--foreground)] sm:text-3xl">
                 ₦{entity.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
               <p className="mt-1 text-xs text-[var(--muted-foreground)]">
