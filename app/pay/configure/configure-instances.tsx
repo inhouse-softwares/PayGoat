@@ -2,16 +2,42 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
-import type { PaymentEntity, FormField, FormFieldType } from "@/lib/payment-store";
+import type { FormField, FormFieldType } from "@/lib/payment-store";
 import { useGetInstancesQuery, useCreateInstanceMutation } from "@/lib/store/api/instancesApi";
+
+type EntityInput = {
+    name: string;
+    flatAmount: string;
+    businessName: string;
+    accountNumber: string;
+    bankCode: string;
+};
 
 type PaymentTypeInput = {
     name: string;
     description: string;
     amount: string;
-    splitEntities: PaymentEntity[];
-    showSplit: boolean;
+    splitEntities: EntityInput[];
 };
+
+/** Percentage each non-final entity takes. Main account (index 0) is floored to 2 dp. */
+function calcEntityPct(flatAmount: string, ptAmount: string, isMain: boolean): number {
+    const flat = parseFloat(flatAmount) || 0;
+    const total = parseFloat(ptAmount) || 0;
+    if (total <= 0 || flat <= 0) return 0;
+    const raw = (flat / total) * 100;
+    return isMain ? Math.floor(raw * 100) / 100 : Math.round(raw * 100) / 100;
+}
+
+/** Percentage the final entity receives = 100 minus sum of all others. */
+function calcRemainingPct(entities: EntityInput[], ptAmount: string): number {
+    if (entities.length <= 1) return 100;
+    let sumOthers = 0;
+    for (let i = 0; i < entities.length - 1; i++) {
+        sumOthers += calcEntityPct(entities[i].flatAmount, ptAmount, i === 0);
+    }
+    return Math.round((100 - sumOthers) * 100) / 100;
+}
 
 type FormFieldInput = {
     key: string;
@@ -101,6 +127,35 @@ export function ConfigureInstances() {
             return;
         }
 
+        // Validate receiving entities for every payment type
+        for (const pt of paymentTypes) {
+            if (pt.splitEntities.length === 0) {
+                alert(`Payment type "${pt.name || "(unnamed)"}" must have at least one receiving entity.`);
+                return;
+            }
+            if (pt.splitEntities.length > 1) {
+                for (let i = 0; i < pt.splitEntities.length - 1; i++) {
+                    const flat = parseFloat(pt.splitEntities[i].flatAmount) || 0;
+                    if (flat <= 0) {
+                        alert(`Payment type "${pt.name}": ${i === 0 ? "Main Account" : `Entity ${i + 1}`} needs a flat amount greater than 0.`);
+                        return;
+                    }
+                }
+                const sumPct = pt.splitEntities
+                    .slice(0, -1)
+                    .reduce((s, e, i) => s + calcEntityPct(e.flatAmount, pt.amount, i === 0), 0);
+                if (sumPct >= 100) {
+                    alert(`Payment type "${pt.name}": flat amounts exceed 100% — the final recipient would receive nothing.`);
+                    return;
+                }
+            }
+            const missingBank = pt.splitEntities.some((e) => !e.businessName.trim() || !e.accountNumber.trim() || !e.bankCode.trim());
+            if (missingBank) {
+                alert(`Payment type "${pt.name}": all receiving entities need resolved bank account details.`);
+                return;
+            }
+        }
+
         try {
             const result = await createInstance({
                 name: trimmedName,
@@ -122,7 +177,13 @@ export function ConfigureInstances() {
                     name: pt.name.trim(),
                     description: pt.description.trim() || undefined,
                     amount: Number(pt.amount),
-                    splitEntities: pt.splitEntities,
+                    splitEntities: pt.splitEntities.map((e, i, arr) => {
+                        let pct: number;
+                        if (arr.length === 1) pct = 100;
+                        else if (i === arr.length - 1) pct = calcRemainingPct(arr, pt.amount);
+                        else pct = calcEntityPct(e.flatAmount, pt.amount, i === 0);
+                        return { name: e.name, percentage: pct, businessName: e.businessName, accountNumber: e.accountNumber, bankCode: e.bankCode };
+                    }),
                 })) as any,
             }).unwrap();
 
@@ -138,6 +199,7 @@ export function ConfigureInstances() {
             setInstanceName("");
             setPaymentTypes([]);
             setFormFields([]);
+            setPtResolveState({});
         } catch (error: any) {
             console.error("Error creating instance:", error);
             alert(error?.data?.error || error?.message || "Failed to create instance");
@@ -270,7 +332,7 @@ export function ConfigureInstances() {
                                 <button
                                     type="button"
                                     onClick={() =>
-                                        setPaymentTypes([...paymentTypes, { name: "", description: "", amount: "", splitEntities: [], showSplit: false }])
+                                        setPaymentTypes([...paymentTypes, { name: "", description: "", amount: "", splitEntities: [{ name: "", flatAmount: "", businessName: "", accountNumber: "", bankCode: "" }] }])
                                     }
                                     className="text-xs font-semibold text-[var(--accent)] transition hover:underline"
                                 >
@@ -278,7 +340,7 @@ export function ConfigureInstances() {
                                 </button>
                             </div>
                             <p className="mt-1 text-xs text-[var(--muted-foreground)]">
-                                Define specific reasons, amounts, and optional per-type revenue splits for each payment reason.
+                                Define reasons, amounts, and receiving entities for each payment type. Each type must have at least one entity and percentages must total 100%.
                             </p>
 
                             <div className="mt-3 space-y-3">
@@ -332,128 +394,156 @@ export function ConfigureInstances() {
                                             placeholder="Description (optional)"
                                             className="h-9 w-full rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] px-3 text-xs text-[var(--foreground)] outline-none focus:border-[var(--accent)]"
                                         />
-                                        {/* Per-type split entities toggle */}
-                                        <button
-                                            type="button"
-                                            onClick={() => {
-                                                const updated = [...paymentTypes];
-                                                updated[index].showSplit = !updated[index].showSplit;
-                                                setPaymentTypes(updated);
-                                            }}
-                                            className="flex items-center gap-1 text-xs font-semibold text-[var(--accent)] transition hover:underline"
-                                        >
-                                            {pt.showSplit ? "▾" : "▸"} {pt.splitEntities.length > 0 ? `Split Entities (${pt.splitEntities.length})` : "Add Split Entities for this type (optional)"}
-                                        </button>
-                                        {pt.showSplit && (
-                                            <div className="mt-1 space-y-2 rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] p-2">
-                                                <p className="text-xs text-[var(--muted-foreground)]">
-                                                    If defined, Paystack will use this split instead of the instance-level split for this payment reason.
-                                                </p>
-                                                {pt.splitEntities.map((entity, eIdx) => {
-                                                    const ptKey = `${index}-${eIdx}`;
-                                                    return (
-                                                        <div key={eIdx} className="space-y-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-2">
-                                                            <div className="flex gap-2">
-                                                                <input
-                                                                    value={entity.name}
-                                                                    onChange={(e) => {
-                                                                        const updated = [...paymentTypes];
-                                                                        updated[index].splitEntities[eIdx].name = e.target.value;
-                                                                        setPaymentTypes(updated);
-                                                                    }}
-                                                                    placeholder="Entity name"
-                                                                    className="h-9 flex-1 rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] px-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--accent)]"
-                                                                    required
-                                                                />
-                                                                <input
-                                                                    value={entity.percentage || ""}
-                                                                    onChange={(e) => {
-                                                                        const updated = [...paymentTypes];
-                                                                        updated[index].splitEntities[eIdx].percentage = Number(e.target.value);
-                                                                        setPaymentTypes(updated);
-                                                                    }}
-                                                                    type="number" min="0" max="100" step="0.01" placeholder="%"
-                                                                    className="h-9 w-20 rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] px-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--accent)]"
-                                                                    required
-                                                                />
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        const updated = [...paymentTypes];
-                                                                        updated[index].splitEntities = updated[index].splitEntities.filter((_, i) => i !== eIdx);
-                                                                        setPaymentTypes(updated);
-                                                                    }}
-                                                                    className="h-9 w-9 rounded-xl border border-[var(--danger)] text-[var(--danger)] transition hover:bg-[var(--danger)]/10"
-                                                                >×</button>
-                                                            </div>
-                                                            <div className="flex gap-2">
-                                                                <input
-                                                                    value={entity.accountNumber ?? ""}
-                                                                    onChange={(e) => {
-                                                                        const val = e.target.value.replace(/\D/g, "").slice(0, 10);
-                                                                        const updated = [...paymentTypes];
-                                                                        updated[index].splitEntities[eIdx].accountNumber = val;
-                                                                        setPaymentTypes(updated);
-                                                                        resolvePtAccount(ptKey, val, entity.bankCode ?? "");
-                                                                    }}
-                                                                    placeholder="Account number"
-                                                                    maxLength={10} inputMode="numeric"
-                                                                    className="h-9 flex-1 rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] px-3 text-sm font-mono text-[var(--foreground)] outline-none focus:border-[var(--accent)]"
-                                                                    required
-                                                                />
-                                                                <select
-                                                                    value={entity.bankCode ?? ""}
-                                                                    onChange={(e) => {
-                                                                        const updated = [...paymentTypes];
-                                                                        updated[index].splitEntities[eIdx].bankCode = e.target.value;
-                                                                        setPaymentTypes(updated);
-                                                                        resolvePtAccount(ptKey, entity.accountNumber ?? "", e.target.value);
-                                                                    }}
-                                                                    className="h-9 flex-1 rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] px-2 text-sm text-[var(--foreground)] outline-none focus:border-[var(--accent)]"
-                                                                    required
-                                                                >
-                                                                    <option value="">{banksLoading ? "Loading…" : "Select bank"}</option>
-                                                                    {banks.map((b, bi) => <option key={bi} value={b.code}>{b.name}</option>)}
-                                                                </select>
-                                                            </div>
-                                                            <div className="relative">
-                                                                <input
-                                                                    value={ptResolveState[ptKey]?.loading ? "" : (entity.businessName ?? "")}
-                                                                    readOnly
-                                                                    placeholder={ptResolveState[ptKey]?.loading ? "Resolving…" : "Account name (auto-filled)"}
-                                                                    className={`h-9 w-full rounded-xl border px-3 text-sm outline-none cursor-not-allowed opacity-90 ${ptResolveState[ptKey]?.error ? "border-[var(--danger)] bg-[var(--danger)]/5" : entity.businessName ? "border-green-500 bg-green-50/30" : "border-[var(--border)] bg-[var(--surface-soft)]"}`}
-                                                                    required
-                                                                />
-                                                                {ptResolveState[ptKey]?.loading && (
-                                                                    <span className="absolute right-3 top-2 text-xs text-[var(--muted-foreground)] animate-pulse">Resolving…</span>
+                                        {/* Receiving Entities — mandatory, always shown */}
+                                        <div className="mt-2 rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] p-2">
+                                            <div className="mb-2 flex items-center justify-between">
+                                                <p className="text-xs font-semibold text-[var(--foreground)]">Receiving Entities</p>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const updated = [...paymentTypes];
+                                                        updated[index].splitEntities = [
+                                                            ...updated[index].splitEntities,
+                                                            { name: "", flatAmount: "", businessName: "", accountNumber: "", bankCode: "" },
+                                                        ];
+                                                        setPaymentTypes(updated);
+                                                    }}
+                                                    className="text-xs font-semibold text-[var(--accent)] hover:underline"
+                                                >
+                                                    + Add Entity
+                                                </button>
+                                            </div>
+                                            {pt.splitEntities.map((entity, eIdx) => {
+                                                const isMain = eIdx === 0;
+                                                const isLast = eIdx === pt.splitEntities.length - 1;
+                                                const isOnly = pt.splitEntities.length === 1;
+                                                const ptKey = `${index}-${eIdx}`;
+                                                const pct = isOnly
+                                                    ? 100
+                                                    : isLast
+                                                    ? calcRemainingPct(pt.splitEntities, pt.amount)
+                                                    : calcEntityPct(entity.flatAmount, pt.amount, isMain);
+                                                return (
+                                                    <div key={eIdx} className="mb-2 space-y-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-2">
+                                                        {/* Label row */}
+                                                        <div className="flex items-center justify-between">
+                                                            <span className={`text-xs font-semibold ${isMain ? "text-[var(--accent)]" : "text-[var(--foreground)]"}`}>
+                                                                {isMain ? "Main Account" : `Entity ${eIdx + 1}`}
+                                                                {isLast && !isOnly && <span className="ml-1 font-normal text-[var(--muted-foreground)]">(final recipient)</span>}
+                                                            </span>
+                                                            <div className="flex items-center gap-2">
+                                                                <span className={`font-mono text-xs font-bold ${pct < 0 ? "text-[var(--danger)]" : "text-green-600"}`}>
+                                                                    {pct.toFixed(2)}%
+                                                                </span>
+                                                                {!isMain && (
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => {
+                                                                            const updated = [...paymentTypes];
+                                                                            updated[index].splitEntities = updated[index].splitEntities.filter((_, i) => i !== eIdx);
+                                                                            setPaymentTypes(updated);
+                                                                        }}
+                                                                        className="h-6 w-6 rounded border border-[var(--danger)] text-xs text-[var(--danger)] hover:bg-[var(--danger)]/10"
+                                                                    >×</button>
                                                                 )}
                                                             </div>
-                                                            {ptResolveState[ptKey]?.error && (
-                                                                <p className="text-xs text-[var(--danger)]">⚠ {ptResolveState[ptKey].error}</p>
+                                                        </div>
+                                                        {/* Entity name */}
+                                                        <input
+                                                            value={entity.name}
+                                                            onChange={(e) => {
+                                                                const updated = [...paymentTypes];
+                                                                updated[index].splitEntities[eIdx].name = e.target.value;
+                                                                setPaymentTypes(updated);
+                                                            }}
+                                                            placeholder={isMain ? "Main account name (e.g. IMTC)" : "Entity name"}
+                                                            className="h-9 w-full rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] px-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--accent)]"
+                                                            required
+                                                        />
+                                                        {/* Flat amount — hidden for the final recipient when there are multiple entities */}
+                                                        {!(isLast && !isOnly) && (
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="relative flex-1">
+                                                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-[var(--muted-foreground)]">₦</span>
+                                                                    <input
+                                                                        value={entity.flatAmount}
+                                                                        onChange={(e) => {
+                                                                            const updated = [...paymentTypes];
+                                                                            updated[index].splitEntities[eIdx].flatAmount = e.target.value;
+                                                                            setPaymentTypes(updated);
+                                                                        }}
+                                                                        type="number"
+                                                                        min="0"
+                                                                        step="0.01"
+                                                                        placeholder={isOnly ? "Single entity — gets 100%" : isMain ? "Flat amount for main account" : "Flat amount for this entity"}
+                                                                        disabled={isOnly}
+                                                                        className="h-9 w-full rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] pl-7 pr-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+                                                                    />
+                                                                </div>
+                                                                {!isOnly && (
+                                                                    <span className="shrink-0 text-xs text-[var(--muted-foreground)]">= {pct.toFixed(2)}%</span>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                        {/* Remainder info for the final recipient */}
+                                                        {isLast && !isOnly && (
+                                                            <div className={`rounded-lg border px-3 py-1.5 text-xs ${pct < 0 ? "border-[var(--danger)] bg-[var(--danger)]/5 text-[var(--danger)]" : "border-green-500 bg-green-50/30 text-green-700"}`}>
+                                                                {pct < 0
+                                                                    ? "⚠ Flat amounts of other entities exceed 100% — reduce them"
+                                                                    : `Receives remaining: ${pct.toFixed(2)}% = ₦${pt.amount ? (Number(pt.amount) * pct / 100).toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"} per payment`}
+                                                            </div>
+                                                        )}
+                                                        {/* Account number + bank */}
+                                                        <div className="flex gap-2">
+                                                            <input
+                                                                value={entity.accountNumber ?? ""}
+                                                                onChange={(e) => {
+                                                                    const val = e.target.value.replace(/\D/g, "").slice(0, 10);
+                                                                    const updated = [...paymentTypes];
+                                                                    updated[index].splitEntities[eIdx].accountNumber = val;
+                                                                    setPaymentTypes(updated);
+                                                                    resolvePtAccount(ptKey, val, entity.bankCode ?? "");
+                                                                }}
+                                                                placeholder="Account number"
+                                                                maxLength={10} inputMode="numeric"
+                                                                className="h-9 flex-1 rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] px-3 text-sm font-mono text-[var(--foreground)] outline-none focus:border-[var(--accent)]"
+                                                                required
+                                                            />
+                                                            <select
+                                                                value={entity.bankCode ?? ""}
+                                                                onChange={(e) => {
+                                                                    const updated = [...paymentTypes];
+                                                                    updated[index].splitEntities[eIdx].bankCode = e.target.value;
+                                                                    setPaymentTypes(updated);
+                                                                    resolvePtAccount(ptKey, entity.accountNumber ?? "", e.target.value);
+                                                                }}
+                                                                className="h-9 flex-1 rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] px-2 text-sm text-[var(--foreground)] outline-none focus:border-[var(--accent)]"
+                                                                required
+                                                            >
+                                                                <option value="">{banksLoading ? "Loading…" : "Select bank"}</option>
+                                                                {banks.map((b, bi) => <option key={bi} value={b.code}>{b.name}</option>)}
+                                                            </select>
+                                                        </div>
+                                                        {/* Account name auto-fill */}
+                                                        <div className="relative">
+                                                            <input
+                                                                value={ptResolveState[ptKey]?.loading ? "" : (entity.businessName ?? "")}
+                                                                readOnly
+                                                                placeholder={ptResolveState[ptKey]?.loading ? "Resolving…" : "Account name (auto-filled)"}
+                                                                className={`h-9 w-full rounded-xl border px-3 text-sm outline-none cursor-not-allowed opacity-90 ${ptResolveState[ptKey]?.error ? "border-[var(--danger)] bg-[var(--danger)]/5" : entity.businessName ? "border-green-500 bg-green-50/30" : "border-[var(--border)] bg-[var(--surface-soft)]"}`}
+                                                                required
+                                                            />
+                                                            {ptResolveState[ptKey]?.loading && (
+                                                                <span className="absolute right-3 top-2 text-xs text-[var(--muted-foreground)] animate-pulse">Resolving…</span>
                                                             )}
                                                         </div>
-                                                    );
-                                                })}
-                                                <div className="flex items-center justify-between">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            const updated = [...paymentTypes];
-                                                            updated[index].splitEntities = [...updated[index].splitEntities, { name: "", percentage: 0, businessName: "", accountNumber: "", bankCode: "" }];
-                                                            setPaymentTypes(updated);
-                                                        }}
-                                                        className="text-xs font-semibold text-[var(--accent)] hover:underline"
-                                                    >
-                                                        + Add Entity
-                                                    </button>
-                                                    {pt.splitEntities.length > 0 && (
-                                                        <p className="text-xs text-[var(--muted-foreground)]">
-                                                            Total: {pt.splitEntities.reduce((s, e) => s + (e.percentage || 0), 0).toFixed(2)}% (must equal 100%)
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        )}
+                                                        {ptResolveState[ptKey]?.error && (
+                                                            <p className="text-xs text-[var(--danger)]">⚠ {ptResolveState[ptKey].error}</p>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                 ))}
 
