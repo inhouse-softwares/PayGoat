@@ -38,7 +38,7 @@ export default function LandingPage() {
           <h1 className="text-4xl font-bold tracking-tight text-[var(--foreground)] sm:text-6xl">
             Streamline Your Payment Collections with{" "}
             <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              PayGoat
+              Paygoat
             </span>
           </h1>
           <p className="mt-6 text-lg leading-8 text-[var(--muted-foreground)] sm:text-xl">
