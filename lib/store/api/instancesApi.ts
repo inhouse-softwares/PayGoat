@@ -5,6 +5,10 @@ export const instancesApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getInstances: builder.query<PaymentInstance[], void>({
       query: () => "/instances",
+      transformResponse: (response: any) => {
+        // Handle paginated response from API
+        return response?.data || response || [];
+      },
       providesTags: ["PaymentInstance"],
     }),
     getInstanceById: builder.query<PaymentInstance & { collections: any[] }, string>({

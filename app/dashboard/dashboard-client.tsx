@@ -12,13 +12,17 @@ export function DashboardClient() {
   const isLoading = instancesLoading || collectionsLoading;
 
   const totalCollected = useMemo(
-    () => collections.reduce((sum, c) => sum + c.amount, 0),
+    () => {
+      if(!collections) return 0;
+      return collections.reduce((sum, c) => sum + c.amount, 0);
+    },
     [collections],
   );
 
   const instanceTotals = useMemo(() => {
+    if(!instances || !collections) return [];
     return instances.map((instance) => {
-      const instanceCollections = collections.filter((c) => c.instanceId === instance.id);
+      const instanceCollections = collections ? collections.filter((c) => c.instanceId === instance.id) : [];
       const total = instanceCollections.reduce((sum, c) => sum + c.amount, 0);
       return { instance, total, count: instanceCollections.length };
     });
