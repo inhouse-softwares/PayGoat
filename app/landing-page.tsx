@@ -209,7 +209,7 @@ export default function LandingPage() {
             <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
               <div>
                 <h2 className="text-3xl font-bold tracking-tight text-[var(--foreground)] sm:text-4xl">
-                  Why Choose PayGoat?
+                  Why Choose Paygoat?
                 </h2>
                 <div className="mt-8 space-y-6">
                   <div className="flex gap-4">

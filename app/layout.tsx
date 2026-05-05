@@ -20,7 +20,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PayGoat Payments Portal",
+  title: "Paygoat Payments Portal",
   description: "Internal dashboard for tracking service payments and transactions.",
 };
 
