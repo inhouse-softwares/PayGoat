@@ -28,6 +28,7 @@ export type Receipt = {
 };
 
 type Step = "reason" | "details" | "receipts";
+type ReceiptMode = "single" | "individual" | "bulk";
 
 function emptyPerson(): Person {
   return { name: "", email: "", fields: {} };
@@ -41,7 +42,10 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
   const [selectedPaymentTypeId, setSelectedPaymentTypeId] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [persons, setPersons] = useState<Person[]>([emptyPerson()]);
+  const [receiptMode, setReceiptMode] = useState<ReceiptMode>("individual");
+  const [bulkReceiptCount, setBulkReceiptCount] = useState(1);
   const [isInitiating, setIsInitiating] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [viewingCollection, setViewingCollection] = useState<PaymentCollection | null>(null);
 
@@ -87,7 +91,15 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
 
   function handleContinueToDetails() {
     if (!selectedPaymentType || quantity < 1) return;
-    setPersons(Array.from({ length: quantity }, () => emptyPerson()));
+    
+    // For single/bulk receipt mode, only need one payer info
+    // For individual mode, need info for each person
+    if (receiptMode === "single" || receiptMode === "bulk") {
+      setPersons([emptyPerson()]); // Just the payer/organization info
+    } else {
+      setPersons(Array.from({ length: quantity }, () => emptyPerson()));
+    }
+    
     setStep("details");
   }
 
@@ -104,14 +116,21 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
   function validatePersons(): string | null {
     for (let i = 0; i < persons.length; i++) {
       const p = persons[i];
-      if (!p.name.trim()) return `Person ${i + 1}: name is required`;
-      if (!p.email.trim() || !p.email.includes("@")) return `Person ${i + 1}: valid email is required`;
+      const personLabel = receiptMode === "single" ? "Payer/Organization" : receiptMode === "bulk" ? "Payment Details" : `Person ${i + 1}`;
+      if (!p.name.trim()) return `${personLabel}: name is required`;
+      if (!p.email.trim() || !p.email.includes("@")) return `${personLabel}: valid email is required`;
       if (instance?.formFields) {
         for (const f of instance.formFields) {
-          if (f.required && !p.fields[f.key]?.trim()) return `Person ${i + 1}: ${f.label} is required`;
+          if (f.required && !p.fields[f.key]?.trim()) return `${personLabel}: ${f.label} is required`;
         }
       }
     }
+    
+    // Validate bulk receipt count
+    if (receiptMode === "bulk" && bulkReceiptCount < 1) {
+      return "Bulk receipt count must be at least 1";
+    }
+    
     return null;
   }
 
@@ -169,6 +188,7 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
         metadata: { payer_name: payerName, instance_id: instance.id, payment_type: selectedPaymentType.name, quantity },
 
         onSuccess: async (transaction) => {
+          setIsVerifying(true);
           try {
             const idclAmount = Number(((totalAmount * instance.idclPercent) / 100).toFixed(2));
             const motAmount = Number((totalAmount - idclAmount).toFixed(2));
@@ -199,9 +219,42 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
               return;
             }
 
-            // Build per-person receipts
-            setReceipts(
-              persons.map((p, i) => ({
+            // Build receipts based on selected mode
+            let generatedReceipts: Receipt[] = [];
+            
+            if (receiptMode === "single") {
+              // Single consolidated receipt for the entire payment
+              generatedReceipts = [{
+                index: 0,
+                name: persons[0].name,
+                email: persons[0].email,
+                fields: persons[0].fields,
+                paymentType: selectedPaymentType.name,
+                unitAmount: totalAmount, // Full amount on single receipt
+                totalAmount,
+                quantity,
+                reference: transaction.reference,
+                collectedAt,
+                instanceName: instance.name,
+              }];
+            } else if (receiptMode === "bulk") {
+              // Generate multiple identical receipts for distribution
+              generatedReceipts = Array.from({ length: bulkReceiptCount }, (_, i) => ({
+                index: i,
+                name: persons[0].name,
+                email: persons[0].email,
+                fields: persons[0].fields,
+                paymentType: selectedPaymentType.name,
+                unitAmount,
+                totalAmount,
+                quantity,
+                reference: transaction.reference,
+                collectedAt,
+                instanceName: instance.name,
+              }));
+            } else {
+              // Individual receipts per person
+              generatedReceipts = persons.map((p, i) => ({
                 index: i,
                 name: p.name,
                 email: p.email,
@@ -213,13 +266,16 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
                 reference: transaction.reference,
                 collectedAt,
                 instanceName: instance.name,
-              }))
-            );
+              }));
+            }
+            
+            setReceipts(generatedReceipts);
             setStep("receipts");
             refetchCollections();
           } finally {
             paymentInFlight.current = false;
             setIsInitiating(false);
+            setIsVerifying(false);
           }
         },
 
@@ -241,6 +297,8 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
     setSelectedPaymentTypeId("");
     setQuantity(1);
     setPersons([emptyPerson()]);
+    setReceiptMode("individual");
+    setBulkReceiptCount(1);
     setReceipts([]);
   }
 
@@ -262,8 +320,43 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
     );
   }
 
+  // ─── VERIFYING PAYMENT ────────────────────────────────────────────────────
+  if (isVerifying) {
+    return (
+      <div className="flex min-h-[400px] flex-col items-center justify-center space-y-5 rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-8 text-center">
+        {/* Animated spinner */}
+        <div className="relative h-16 w-16">
+          <div className="absolute inset-0 rounded-full border-4 border-[var(--accent)]/20"></div>
+          <div className="absolute inset-0 animate-spin rounded-full border-4 border-transparent border-t-[var(--accent)] border-r-[var(--accent)]"></div>
+        </div>
+        
+        {/* Status text */}
+        <div className="space-y-2">
+          <h2 className="text-xl font-semibold text-[var(--foreground)]">Verifying Payment</h2>
+          <p className="text-sm text-[var(--muted-foreground)]">
+            Please wait while we confirm your payment with Paystack...
+          </p>
+        </div>
+        
+        {/* Additional info */}
+        <div className="mt-4 rounded-xl bg-[var(--surface)] px-4 py-3">
+          <p className="text-xs text-[var(--muted-foreground)]">
+            💳 Payment received • Generating receipts
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // ─── RECEIPTS STEP ────────────────────────────────────────────────────────
   if (step === "receipts") {
+    const receiptModeLabel = 
+      receiptMode === "single" 
+        ? "Consolidated receipt" 
+        : receiptMode === "bulk"
+        ? `${receipts.length} copies`
+        : `${receipts.length} individual ${receipts.length === 1 ? "receipt" : "receipts"}`;
+    
     return (
       <div className="space-y-5">
         {/* Header row */}
@@ -271,7 +364,7 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
           <div>
             <h1 className="text-xl font-semibold text-[var(--foreground)] sm:text-2xl">Payment Successful</h1>
             <p className="mt-1 text-sm text-[var(--muted-foreground)]">
-              {receipts.length} receipt{receipts.length > 1 ? "s" : ""} ready — ₦{receipts[0]?.totalAmount.toLocaleString("en-NG", { minimumFractionDigits: 2 })} total
+              {receiptModeLabel} ready — ₦{receipts[0]?.totalAmount.toLocaleString("en-NG", { minimumFractionDigits: 2 })} total
             </p>
           </div>
           <div className="flex gap-2">
@@ -296,7 +389,12 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
             <div key={r.index} className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
               <div className="flex items-center justify-between">
                 <span className="rounded-full bg-[var(--accent-soft)] px-2 py-0.5 text-xs font-semibold text-[var(--accent)]">
-                  Person {r.index + 1}{receipts.length > 1 ? ` of ${receipts.length}` : ""}
+                  {receiptMode === "single" 
+                    ? "Consolidated Receipt" 
+                    : receiptMode === "bulk"
+                    ? `Copy ${r.index + 1} of ${receipts.length}`
+                    : `Person ${r.index + 1}${receipts.length > 1 ? ` of ${receipts.length}` : ""}`
+                  }
                 </span>
                 <span className="font-mono text-xs text-[var(--muted-foreground)]">{r.reference.slice(-10)}</span>
               </div>
@@ -309,7 +407,12 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
               ))}
               <div className="mt-3 flex items-center justify-between border-t border-[var(--border)] pt-3">
                 <span className="text-sm text-[var(--muted-foreground)]">{r.paymentType}</span>
-                <span className="font-bold text-[var(--accent)]">₦{r.unitAmount.toLocaleString("en-NG", { minimumFractionDigits: 2 })}</span>
+                <span className="font-bold text-[var(--accent)]">
+                  ₦{r.unitAmount.toLocaleString("en-NG", { minimumFractionDigits: 2 })}
+                  {receiptMode === "single" && r.quantity > 1 && (
+                    <span className="ml-1 text-xs font-normal text-[var(--muted-foreground)]">({r.quantity} people)</span>
+                  )}
+                </span>
               </div>
               <p className="mt-1 text-xs text-[var(--muted-foreground)]">{r.collectedAt}</p>
             </div>
@@ -374,8 +477,9 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
 
           {/* Step 2: Number of people — only shown after reason is selected */}
           {selectedPaymentType && (
-            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4 sm:p-5">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">Step 2 — Number of People</p>
+            <>
+              <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4 sm:p-5">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">Step 2 — Number of People</p>
               <div className="flex items-center gap-2 sm:gap-3">
                 <button
                   type="button"
@@ -406,14 +510,133 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
                   {quantity} × ₦{unitAmount.toLocaleString("en-NG", { minimumFractionDigits: 2 })} — one charge covers all {quantity} people
                 </p>
               )}
+            </div>
+
+            {/* Step 3: Receipt Generation Mode */}
+            <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4 sm:p-5">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">Step 3 — Receipt Generation</p>
+              <div className="space-y-2">
+                {/* Single Receipt Option */}
+                <label
+                  className={`flex cursor-pointer items-start gap-3 rounded-xl border-2 p-3 transition ${
+                    receiptMode === "single"
+                      ? "border-[var(--accent)] bg-[var(--accent-soft)]/30"
+                      : "border-[var(--border)] bg-[var(--surface)] hover:border-[var(--accent)]/50"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="receiptMode"
+                    value="single"
+                    checked={receiptMode === "single"}
+                    onChange={(e) => setReceiptMode(e.target.value as ReceiptMode)}
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--accent)]"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-[var(--foreground)]">📄 Single Consolidated Receipt</p>
+                    <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
+                      One receipt with full payment amount. Ideal for schools, organizations, or bulk payments.
+                    </p>
+                  </div>
+                </label>
+
+                {/* Individual Receipts Option */}
+                <label
+                  className={`flex cursor-pointer items-start gap-3 rounded-xl border-2 p-3 transition ${
+                    receiptMode === "individual"
+                      ? "border-[var(--accent)] bg-[var(--accent-soft)]/30"
+                      : "border-[var(--border)] bg-[var(--surface)] hover:border-[var(--accent)]/50"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="receiptMode"
+                    value="individual"
+                    checked={receiptMode === "individual"}
+                    onChange={(e) => setReceiptMode(e.target.value as ReceiptMode)}
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--accent)]"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-[var(--foreground)]">👥 Individual Receipts</p>
+                    <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
+                      Separate receipt for each person ({quantity} {quantity === 1 ? "receipt" : "receipts"}). Each shows their individual amount.
+                    </p>
+                  </div>
+                </label>
+
+                {/* Bulk Receipts Option */}
+                <label
+                  className={`flex cursor-pointer items-start gap-3 rounded-xl border-2 p-3 transition ${
+                    receiptMode === "bulk"
+                      ? "border-[var(--accent)] bg-[var(--accent-soft)]/30"
+                      : "border-[var(--border)] bg-[var(--surface)] hover:border-[var(--accent)]/50"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="receiptMode"
+                    value="bulk"
+                    checked={receiptMode === "bulk"}
+                    onChange={(e) => setReceiptMode(e.target.value as ReceiptMode)}
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--accent)]"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-[var(--foreground)]">📋 Bulk Receipts (Multiple Copies)</p>
+                    <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
+                      Generate multiple identical receipts for distribution. Perfect when you need extras.
+                    </p>
+                  </div>
+                </label>
+
+                {/* Bulk receipt count selector */}
+                {receiptMode === "bulk" && (
+                  <div className="mt-3 rounded-xl border border-[var(--accent-soft)] bg-[var(--accent-soft)]/20 p-3">
+                    <p className="mb-2 text-xs font-semibold text-[var(--muted-foreground)]">Number of Receipts to Generate</p>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setBulkReceiptCount((c) => Math.max(1, c - 1))}
+                        disabled={bulkReceiptCount <= 1}
+                        className="h-10 w-10 shrink-0 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-lg font-bold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:opacity-40"
+                      >−</button>
+                      <input
+                        type="number"
+                        min="1"
+                        max="200"
+                        value={bulkReceiptCount}
+                        onChange={(e) => setBulkReceiptCount(Math.max(1, Math.min(200, Number(e.target.value) || 1)))}
+                        className="h-10 flex-1 rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 text-center text-sm font-semibold text-[var(--foreground)] outline-none focus:border-[var(--accent)]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setBulkReceiptCount((c) => Math.min(200, c + 1))}
+                        className="h-10 w-10 shrink-0 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-lg font-bold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                      >+</button>
+                    </div>
+                    <p className="mt-2 text-xs text-[var(--muted-foreground)]">
+                      Will generate {bulkReceiptCount} identical {bulkReceiptCount === 1 ? "receipt" : "receipts"}
+                    </p>
+                  </div>
+                )}
+              </div>
+
               <button
                 type="button"
                 onClick={handleContinueToDetails}
                 className="mt-4 h-12 w-full rounded-xl bg-[var(--accent)] text-sm font-semibold text-white transition hover:brightness-95 active:scale-[0.98]"
               >
-                Continue — {quantity === 1 ? "Fill In Details" : `Details for ${quantity} People`} →
+                Continue — {
+                  receiptMode === "single" 
+                    ? "Enter Payer Details" 
+                    : receiptMode === "bulk"
+                    ? "Enter Payment Details"
+                    : quantity === 1 
+                    ? "Fill In Details" 
+                    : `Details for ${quantity} People`
+                } →
               </button>
             </div>
+            </>
           )}
         </div>
 
@@ -574,6 +797,35 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
   // ─── DETAILS STEP (per-person forms) ─────────────────────────────────────
   return (
     <>
+      {/* Loading overlay for payment initiation */}
+      {isInitiating && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-8 shadow-2xl">
+            <div className="flex flex-col items-center space-y-5">
+              {/* Animated spinner */}
+              <div className="relative h-20 w-20">
+                <div className="absolute inset-0 rounded-full border-4 border-[var(--accent)]/20"></div>
+                <div className="absolute inset-0 animate-spin rounded-full border-4 border-transparent border-t-[var(--accent)] border-r-[var(--accent)]"></div>
+              </div>
+              
+              {/* Status text */}
+              <div className="text-center space-y-2">
+                <h2 className="text-xl font-semibold text-[var(--foreground)]">Initiating Payment</h2>
+                <p className="text-sm text-[var(--muted-foreground)] max-w-xs">
+                  Connecting to Paystack payment gateway...
+                </p>
+              </div>
+              
+              {/* Progress indicator */}
+              <div className="flex items-center gap-2 text-xs text-[var(--muted-foreground)]">
+                <div className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] animate-pulse"></div>
+                <span>Opening secure payment window</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
@@ -607,9 +859,14 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
           <div key={i} className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4">
             <div className="mb-3 flex items-center gap-2">
               <span className="rounded-full bg-[var(--accent-soft)] px-2.5 py-0.5 text-xs font-semibold text-[var(--accent)]">
-                Person {i + 1}{quantity > 1 ? ` of ${quantity}` : ""}
+                {receiptMode === "single" 
+                  ? "Payer/Organization Details" 
+                  : receiptMode === "bulk"
+                  ? "Payment Details"
+                  : `Person ${i + 1}${quantity > 1 ? ` of ${quantity}` : ""}`
+                }
               </span>
-              {quantity > 1 && (
+              {quantity > 1 && receiptMode === "individual" && (
                 <span className="text-xs text-[var(--muted-foreground)]">₦{unitAmount.toLocaleString("en-NG", { minimumFractionDigits: 2 })}</span>
               )}
             </div>

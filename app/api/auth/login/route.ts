@@ -1,22 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import * as bcrypt from "bcryptjs";
-import { cookies } from "next/headers";
+import { setSession } from "@/lib/auth-utils";
+import type { UserRole } from "@/lib/auth-types";
+import { withRateLimit, RateLimitPresets } from "@/lib/rate-limit";
+import { LoginSchema } from "@/lib/validation";
+import { z } from "zod";
 
-export async function POST(request: NextRequest) {
+async function loginHandler(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password } = body;
-
-    if (!email || !password) {
-      return NextResponse.json(
-        { error: "Email and password are required" },
-        { status: 400 }
-      );
-    }
+    
+    // Validate input
+    const validatedData = LoginSchema.parse(body);
+    const { email, password } = validatedData;
 
     const user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase().trim() },
+      where: { email },
     });
 
     if (!user) {
@@ -35,17 +35,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const cookieStore = await cookies();
-    const cookieValue = user.role === "operator" && user.instanceId
-      ? `operator|${user.instanceId}`
-      : user.role;
-    cookieStore.set("paygoat_session", cookieValue, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7,
-      path: "/",
-    });
+    // Set session with consistent duration
+    await setSession(user.role as UserRole, user.instanceId || undefined);
 
     // Record last login time — non-fatal: don't let this block the login response
     try {
@@ -63,6 +54,17 @@ export async function POST(request: NextRequest) {
       instanceId: user.instanceId ?? null,
     });
   } catch (error) {
+    // Handle Zod validation errors
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        {
+          error: "Validation failed",
+          details: error.errors.map((e) => ({ field: e.path.join("."), message: e.message })),
+        },
+        { status: 400 }
+      );
+    }
+    
     console.error("Login error:", error);
     return NextResponse.json(
       { error: "Login failed" },
@@ -70,3 +72,6 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+// Apply rate limiting: 5 login attempts per 15 minutes
+export const POST = withRateLimit(loginHandler, RateLimitPresets.auth);

@@ -34,8 +34,28 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ accountName: data.data.account_name as string });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error resolving account:", error);
+
+    // Check for network errors
+    const isNetworkError = 
+      error.cause?.code === 'ENOTFOUND' ||
+      error.cause?.code === 'ECONNREFUSED' ||
+      error.cause?.code === 'ETIMEDOUT' ||
+      error.cause?.code === 'EAI_AGAIN' ||
+      (error.name === 'TypeError' && error.message?.includes('fetch failed'));
+
+    if (isNetworkError) {
+      return NextResponse.json(
+        { 
+          error: "No internet connection", 
+          details: "Unable to verify account details. Please check your internet connection.",
+          type: "NETWORK_ERROR"
+        }, 
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json({ error: "Failed to resolve account" }, { status: 500 });
   }
 }

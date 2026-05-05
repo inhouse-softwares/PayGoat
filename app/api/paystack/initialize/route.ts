@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { withRateLimit, RateLimitPresets } from "@/lib/rate-limit";
 
-export async function POST(request: NextRequest) {
+async function initializeHandler(request: NextRequest) {
   const secretKey = process.env.PAYSTACK_SECRET_KEY;
 
   if (!secretKey) {
@@ -34,8 +35,31 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(data.data);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error initializing Paystack transaction:", error);
+
+    // Check for network errors
+    const isNetworkError = 
+      error.cause?.code === 'ENOTFOUND' ||
+      error.cause?.code === 'ECONNREFUSED' ||
+      error.cause?.code === 'ETIMEDOUT' ||
+      error.cause?.code === 'EAI_AGAIN' ||
+      (error.name === 'TypeError' && error.message?.includes('fetch failed'));
+
+    if (isNetworkError) {
+      return NextResponse.json(
+        { 
+          error: "No internet connection", 
+          details: "Unable to connect to Paystack. Please check your internet connection.",
+          type: "NETWORK_ERROR"
+        }, 
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json({ error: "Failed to initialize payment" }, { status: 500 });
   }
 }
+
+// Apply rate limiting: 10 payment attempts per minute
+export const POST = withRateLimit(initializeHandler, RateLimitPresets.payment);

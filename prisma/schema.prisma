@@ -20,6 +20,7 @@ model User {
 
   instance    PaymentInstance? @relation(fields: [instanceId], references: [id], onDelete: SetNull)
 
+  @@index([role])
   @@map("users")
 }
 
@@ -80,4 +81,7 @@ model PaymentCollection {
   @@map("payment_collections")
   @@index([instanceId])
   @@index([paymentTypeId])
+  @@index([collectedAt])
+  @@index([payer])
+  @@index([createdAt])
 }

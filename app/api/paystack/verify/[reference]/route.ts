@@ -84,6 +84,26 @@ export async function POST(
     }
 
     console.error("Error verifying Paystack transaction:", error);
+
+    // Check for network errors
+    const isNetworkError = 
+      error.cause?.code === 'ENOTFOUND' ||
+      error.cause?.code === 'ECONNREFUSED' ||
+      error.cause?.code === 'ETIMEDOUT' ||
+      error.cause?.code === 'EAI_AGAIN' ||
+      (error.name === 'TypeError' && error.message?.includes('fetch failed'));
+
+    if (isNetworkError) {
+      return NextResponse.json(
+        { 
+          error: "No internet connection", 
+          details: "Unable to verify payment with Paystack. Please check your internet connection.",
+          type: "NETWORK_ERROR"
+        }, 
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json({ error: "Failed to verify payment" }, { status: 500 });
   }
 }

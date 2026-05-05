@@ -23,8 +23,28 @@ export async function GET() {
     }
 
     return NextResponse.json(data.data as { name: string; code: string }[]);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching banks:", error);
+
+    // Check for network errors
+    const isNetworkError = 
+      error.cause?.code === 'ENOTFOUND' ||
+      error.cause?.code === 'ECONNREFUSED' ||
+      error.cause?.code === 'ETIMEDOUT' ||
+      error.cause?.code === 'EAI_AGAIN' ||
+      (error.name === 'TypeError' && error.message?.includes('fetch failed'));
+
+    if (isNetworkError) {
+      return NextResponse.json(
+        { 
+          error: "No internet connection", 
+          details: "Unable to fetch bank list. Please check your internet connection.",
+          type: "NETWORK_ERROR"
+        }, 
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json({ error: "Failed to fetch banks" }, { status: 500 });
   }
 }

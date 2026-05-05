@@ -208,6 +208,35 @@ export function ConfigureInstances() {
 
     return (
         <>
+            {/* Loading overlay for instance creation */}
+            {isCreating && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                    <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-8 shadow-2xl">
+                        <div className="flex flex-col items-center space-y-5">
+                            {/* Animated spinner */}
+                            <div className="relative h-20 w-20">
+                                <div className="absolute inset-0 rounded-full border-4 border-[var(--accent)]/20"></div>
+                                <div className="absolute inset-0 animate-spin rounded-full border-4 border-transparent border-t-[var(--accent)] border-r-[var(--accent)]"></div>
+                            </div>
+                            
+                            {/* Status text */}
+                            <div className="text-center space-y-2">
+                                <h2 className="text-xl font-semibold text-[var(--foreground)]">Creating Instance</h2>
+                                <p className="text-sm text-[var(--muted-foreground)] max-w-xs">
+                                    Setting up payment configuration with Paystack...
+                                </p>
+                            </div>
+                            
+                            {/* Progress indicator */}
+                            <div className="flex items-center gap-2 text-xs text-[var(--muted-foreground)]">
+                                <div className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] animate-pulse"></div>
+                                <span>Please wait, this may take a moment</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Operator credentials modal — shown once after instance creation */}
             {newCredentials && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -654,7 +683,7 @@ export function ConfigureInstances() {
                             disabled={isCreating}
                             className="h-10 rounded-xl bg-[var(--accent)] px-4 text-sm font-semibold text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                            {isCreating ? "Creating..." : "Create Instance"}
+                            {isCreating ? "Creating Instance..." : "Create Instance"}
                         </button>
                     </form>
                 </article>

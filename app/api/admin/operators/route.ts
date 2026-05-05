@@ -1,13 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { cookies } from "next/headers";
+import { requireAdmin, withAuth } from "@/lib/auth-utils";
 
-export async function GET() {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("paygoat_session")?.value;
-  if (!session || session !== "admin") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+export const GET = withAuth(async () => {
+  // Only admins can view operator list
+  await requireAdmin();
 
   const operators = await prisma.user.findMany({
     where: { role: "operator" },
@@ -26,4 +23,4 @@ export async function GET() {
   });
 
   return NextResponse.json(operators);
-}
+});
