@@ -304,7 +304,7 @@ export default function LandingPage() {
             Ready to Streamline Your Payments?
           </h2>
           <p className="mt-4 text-lg text-[var(--muted-foreground)]">
-            Join organizations already using PayGoat to manage their payment collections efficiently.
+            Join organizations already using Paygoat to manage their payment collections efficiently.
           </p>
           <div className="mt-10">
             <Link
@@ -326,10 +326,8 @@ export default function LandingPage() {
           <div className="grid gap-8 md:grid-cols-3">
             <div>
               <div className="flex items-center gap-2">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 text-lg font-bold text-white">
-                  P
-                </div>
-                <span className="text-xl font-bold text-[var(--foreground)]">PayGoat</span>
+                <Image src="/logo.svg" alt="Paygoat Logo" width={32} height={32} />
+                <span className="text-xl font-bold text-[var(--foreground)]">Paygoat</span>
               </div>
               <p className="mt-4 text-sm text-[var(--muted-foreground)]">
                 Modern payment collection platform for schools, businesses, and organizations.
@@ -361,7 +359,7 @@ export default function LandingPage() {
           </div>
 
           <div className="mt-8 border-t border-[var(--border)] pt-8 text-center text-sm text-[var(--muted-foreground)]">
-            <p>&copy; {new Date().getFullYear()} PayGoat. All rights reserved. Powered by Paystack.</p>
+            <p>&copy; {new Date().getFullYear()} Paygoat. All rights reserved. Powered by Paystack.</p>
           </div>
         </div>
       </footer>
