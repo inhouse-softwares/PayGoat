@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { getSessionRole } from "@/lib/auth";
+import LandingPage from "./landing-page";
 
 export default async function Home() {
   const role = await getSessionRole();
@@ -12,5 +13,6 @@ export default async function Home() {
     redirect("/pay");
   }
 
-  redirect("/login");
+  // Show landing page for non-authenticated users
+  return <LandingPage />;
 }
