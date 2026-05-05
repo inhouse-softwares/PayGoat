@@ -117,7 +117,7 @@ export const PaystackInitializeSchema = z.object({
   amount: z.number().int().positive("Amount must be a positive integer (in kobo)"),
   reference: z.string().min(1, "Reference is required"),
   split_code: z.string().optional(),
-  metadata: z.record(z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).optional(),
 });
 
 export const PaystackResolveSchema = z.object({

@@ -35,8 +35,8 @@ function getClientId(request: NextRequest): string {
     return realIp;
   }
   
-  // Fallback to connection IP
-  return request.ip || "unknown";
+  // Fallback to connection info or unknown
+  return "unknown";
 }
 
 /**
