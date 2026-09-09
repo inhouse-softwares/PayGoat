@@ -7,6 +7,7 @@ import {
   Users,
   FileText,
   UserCircle,
+  User,
 } from "lucide-react";
 import type { UserRole } from "@/lib/auth-types";
 
