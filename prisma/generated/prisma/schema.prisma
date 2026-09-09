@@ -20,6 +20,7 @@ model User {
 
   instance PaymentInstance? @relation(fields: [instanceId], references: [id], onDelete: SetNull)
 
+  @@index([role])
   @@map("users")
 }
 
@@ -59,25 +60,31 @@ model PaymentType {
 }
 
 model PaymentCollection {
-  id                String   @id @default(cuid())
-  instanceId        String
-  instanceName      String
-  splitCode         String
-  paymentTypeId     String?
-  paymentType       String?
-  payer             String
-  amount            Float
-  quantity          Int      @default(1)
-  idclAmount        Float
-  motAmount         Float
-  metadata          Json     @default("{}")
-  paystackReference String?  @unique
-  collectedAt       String
-  createdAt         DateTime @default(now())
+  id               String   @id @default(cuid())
+  instanceId       String
+  instanceName     String
+  splitCode        String
+  paymentTypeId    String?
+  paymentType      String?
+  payer            String
+  amount           Float
+  quantity         Int      @default(1)
+  idclAmount       Float
+  motAmount        Float
+  metadata         Json     @default("{}")
+  paymentReference String?  @unique
+  transactionId    String?  @unique
+  paymentStatus    String   @default("pending")
+  collectedAt      String
+  createdAt        DateTime @default(now())
 
   instance PaymentInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
 
   @@index([instanceId])
   @@index([paymentTypeId])
+  @@index([collectedAt])
+  @@index([payer])
+  @@index([createdAt])
+  @@index([paymentStatus])
   @@map("payment_collections")
 }

@@ -2,36 +2,45 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { PortalHeader } from "./portal-header";
+import { Sidebar } from "./sidebar";
+import { MobileNav } from "./mobile-nav";
+import { MobileHeader } from "./mobile-header";
 import { useAuth } from "@/lib/auth-context";
 
-type PortalRoute = "/dashboard" | "/pay" | "/pay/configure" | "/logs" | "/profile" | "/operators";
+type PortalRoute =
+  | "/dashboard"
+  | "/pay"
+  | "/instances"
+  | "/instances/configure"
+  | "/logs"
+  | "/profile"
+  | "/operators";
 
 function getPortalRoute(pathname: string): PortalRoute | null {
   if (pathname === "/dashboard" || pathname.startsWith("/dashboard/")) {
     return "/dashboard";
   }
-
-  if (pathname === "/pay/configure" || pathname.startsWith("/pay/configure/")) {
-    return "/pay/configure";
+  if (pathname === "/instances/configure" || pathname.startsWith("/instances/configure/")) {
+    return "/instances/configure";
   }
-
+  if (pathname === "/instances" || pathname.startsWith("/instances/")) {
+    return "/instances";
+  }
+  if (pathname === "/pay/transactions" || pathname.startsWith("/pay/transactions/")) {
+    return "/pay";
+  }
   if (pathname === "/pay" || pathname.startsWith("/pay/")) {
     return "/pay";
   }
-
   if (pathname === "/logs" || pathname.startsWith("/logs/")) {
     return "/logs";
   }
-
   if (pathname === "/profile" || pathname.startsWith("/profile/")) {
     return "/profile";
   }
-
   if (pathname === "/operators" || pathname.startsWith("/operators/")) {
     return "/operators";
   }
-
   return null;
 }
 
@@ -43,10 +52,6 @@ export function PortalChrome({
   serverPathname: string;
 }) {
   const { role } = useAuth();
-
-  // usePathname() updates instantly on router.push() — use it for both the
-  // route guard and the active-nav highlight. Fall back to serverPathname
-  // during SSR / before hydration.
   const clientPathname = usePathname();
   const currentRoute = getPortalRoute(clientPathname ?? serverPathname);
 
@@ -59,18 +64,19 @@ export function PortalChrome({
 
   return (
     <div
-      className="min-h-screen p-3 sm:p-6 transition-opacity duration-300"
-      style={{
-        background: "var(--page-bg)",
-        opacity: mounted ? 1 : 0,
-      }}
+      className="min-h-screen transition-opacity duration-200 ease-out"
+      style={{ opacity: mounted ? 1 : 0 }}
     >
-      <div className="mx-auto w-full max-w-7xl space-y-4">
-        <PortalHeader currentPath={currentRoute} role={role} />
-        <main className="rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[0_24px_60px_-30px_rgba(20,30,60,0.35)] sm:p-6">
+      <Sidebar currentPath={currentRoute} role={role} />
+      <MobileHeader currentPath={currentRoute} role={role} />
+
+      <main className="lg:ml-60 min-h-screen pb-20 lg:pb-0">
+        <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
           {children}
-        </main>
-      </div>
+        </div>
+      </main>
+
+      <MobileNav currentPath={currentRoute} role={role} />
     </div>
   );
 }

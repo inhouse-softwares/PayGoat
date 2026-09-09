@@ -21,7 +21,7 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
   // Content Security Policy (adjust as needed)
   response.headers.set(
     "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.paystack.co; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://api.paystack.co;"
+    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://apipg.demo.myimopay.com https://api.paystack.co;"
   );
   
   return response;
@@ -159,5 +159,8 @@ export const config = {
     "/api/collections/:path*",
     "/api/profile/:path*",
     "/api/admin/:path*",
+    "/api/pay/:path*",
+    "/api/myimopay/:path*",
+    "/api/paystack/:path*",
   ],
 };

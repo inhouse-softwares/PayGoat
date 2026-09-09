@@ -109,18 +109,21 @@ export const CreateCollectionSchema = z.object({
 });
 
 // ============================================================================
-// PAYSTACK SCHEMAS
+// MYIMOPAY SCHEMAS
 // ============================================================================
 
-export const PaystackInitializeSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  amount: z.number().int().positive("Amount must be a positive integer (in kobo)"),
-  reference: z.string().min(1, "Reference is required"),
-  split_code: z.string().optional(),
-  metadata: z.record(z.string(), z.any()).optional(),
+export const MyimoPayInitiateSchema = z.object({
+  tx_ref: z.string().min(1, "Transaction reference is required"),
+  amount: z.number().positive("Amount must be positive"),
+  currency: z.string().default("NGN"),
+  customer_full_name: z.string().min(1, "Customer name is required"),
+  customer_email: z.string().email("Invalid email address").optional(),
+  customer_mobile: z.string().optional(),
+  callback_url: z.string().url().optional(),
+  settlement_order_id: z.string().uuid().optional(),
 });
 
-export const PaystackResolveSchema = z.object({
+export const MyimoPayResolveSchema = z.object({
   account_number: z.string().regex(/^\d{10}$/, "Account number must be 10 digits"),
   bank_code: z.string().min(1, "Bank code is required"),
 });
@@ -143,6 +146,6 @@ export type PasswordChangeInput = z.infer<typeof PasswordChangeSchema>;
 export type CreateInstanceInput = z.infer<typeof CreateInstanceSchema>;
 export type UpdateInstanceInput = z.infer<typeof UpdateInstanceSchema>;
 export type CreateCollectionInput = z.infer<typeof CreateCollectionSchema>;
-export type PaystackInitializeInput = z.infer<typeof PaystackInitializeSchema>;
-export type PaystackResolveInput = z.infer<typeof PaystackResolveSchema>;
+export type MyimoPayInitiateInput = z.infer<typeof MyimoPayInitiateSchema>;
+export type MyimoPayResolveInput = z.infer<typeof MyimoPayResolveSchema>;
 export type PaginationInput = z.infer<typeof PaginationSchema>;

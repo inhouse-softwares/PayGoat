@@ -4,7 +4,7 @@ import { IBM_Plex_Mono, Manrope } from "next/font/google";
 import { headers } from "next/headers";
 import { PortalChrome } from "./components/portal-chrome";
 import { AuthProvider } from "@/lib/auth-context";
-import { getSessionRole } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { StoreProvider } from "@/lib/store/StoreProvider";
 import NextTopLoader from "nextjs-toploader";
 
@@ -29,7 +29,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const role = await getSessionRole();
+  const session = await getSession();
   const headersList = await headers();
   const pathname = headersList.get("x-pathname") ?? "";
 
@@ -40,7 +40,7 @@ export default async function RootLayout({
       >
         <StoreProvider>
           <NextTopLoader />
-          <AuthProvider initialRole={role}>
+          <AuthProvider initialRole={session?.role ?? null} initialInstanceId={session?.instanceId ?? null}>
             <PortalChrome serverPathname={pathname}>{children}</PortalChrome>
           </AuthProvider>
         </StoreProvider>

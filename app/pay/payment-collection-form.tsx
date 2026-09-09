@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useGetInstanceByIdQuery } from "@/lib/store/api/instancesApi";
 import { useGetCollectionsQuery } from "@/lib/store/api/collectionsApi";
-import type { PaymentCollection } from "@/lib/payment-store";
+import type { PaymentCollection, PaymentCollectionMetadata } from "@/lib/payment-store";
 import printReceipts from "@/utils/print-reciepts";
 
 type Person = {
@@ -34,6 +34,9 @@ function emptyPerson(): Person {
   return { name: "", email: "", fields: {} };
 }
 
+const POLL_INTERVAL_MS = 5000;
+const POLL_MAX_DURATION_MS = 120000; // 2 minutes
+
 export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
   const { data: instance, isLoading: instanceLoading } = useGetInstanceByIdQuery(instanceId);
   const { data: collections = [], refetch: refetchCollections } = useGetCollectionsQuery(instanceId);
@@ -48,14 +51,97 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
   const [isVerifying, setIsVerifying] = useState(false);
   const [receipts, setReceipts] = useState<Receipt[]>([]);
   const [viewingCollection, setViewingCollection] = useState<PaymentCollection | null>(null);
+  const [pollingStatus, setPollingStatus] = useState<string>("");
 
   const paymentInFlight = useRef(false);
+  const pollingRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingStartRef = useRef<number>(0);
+
+  // Handle callback redirect from MyIMO Pay
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const callbackTxRef = params.get("paymentCallback");
+    if (callbackTxRef) {
+      // Clean URL
+      window.history.replaceState({}, "", window.location.pathname);
+      // Trigger verification
+      handleVerifyAfterCallback(callbackTxRef);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Pre-select payment type from URL param
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const ptId = params.get("paymentType");
+    if (ptId) {
+      setSelectedPaymentTypeId(ptId);
+      // Clean URL
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
+
+  const handleVerifyAfterCallback = useCallback(async (txRef: string) => {
+    setIsVerifying(true);
+    try {
+      // We need to find the collection data from pending state or re-derive it
+      // The callback flow verifies server-side, so we just need to refetch
+      const verifyRes = await fetch(`/api/myimopay/verify/${encodeURIComponent(txRef)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+
+      if (verifyRes.ok) {
+        const collection = await verifyRes.json();
+        if (collection.paymentStatus === "success") {
+          const qty = collection.quantity || 1;
+          const unitAmt = collection.amount / qty;
+          const metadata = collection.metadata as PaymentCollectionMetadata;
+          const rawPersons = Array.isArray(metadata.persons)
+            ? metadata.persons
+            : [{ name: collection.payer }];
+
+          const generatedReceipts: Receipt[] = rawPersons.map((p: Record<string, string>, i: number) => ({
+            index: i,
+            name: p.name ?? collection.payer,
+            email: p.email ?? "",
+            fields: Object.fromEntries(Object.entries(p).filter(([k]) => k !== "name" && k !== "email")),
+            paymentType: collection.paymentType ?? "",
+            unitAmount: unitAmt,
+            totalAmount: collection.amount,
+            quantity: qty,
+            reference: collection.paymentReference ?? txRef,
+            collectedAt: collection.collectedAt,
+            instanceName: collection.instanceName,
+          }));
+
+          setReceipts(generatedReceipts);
+          setStep("receipts");
+          refetchCollections();
+        }
+      }
+    } finally {
+      setIsVerifying(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, []);
 
   function buildReceiptsFromCollection(c: PaymentCollection): Receipt[] {
     const qty = c.quantity || 1;
     const unitAmt = c.amount / qty;
+    const metadata = c.metadata as PaymentCollectionMetadata;
     const rawPersons: Array<Record<string, string>> =
-      Array.isArray((c.metadata as any)?.persons) ? (c.metadata as any).persons : [{ name: c.payer }];
+      Array.isArray(metadata.persons) ? metadata.persons : [{ name: c.payer }];
     return rawPersons.map((p, i) => ({
       index: i,
       name: p.name ?? c.payer,
@@ -65,7 +151,7 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
       unitAmount: unitAmt,
       totalAmount: c.amount,
       quantity: qty,
-      reference: c.paystackReference ?? "",
+      reference: c.paymentReference ?? "",
       collectedAt: c.collectedAt,
       instanceName: c.instanceName,
     }));
@@ -80,22 +166,11 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
     [collections, instanceId],
   );
 
-  useEffect(() => {
-    if (document.getElementById("paystack-inline")) return;
-    const script = document.createElement("script");
-    script.id = "paystack-inline";
-    script.src = "https://js.paystack.co/v2/inline.js";
-    script.async = true;
-    document.body.appendChild(script);
-  }, []);
-
   function handleContinueToDetails() {
     if (!selectedPaymentType || quantity < 1) return;
     
-    // For single/bulk receipt mode, only need one payer info
-    // For individual mode, need info for each person
     if (receiptMode === "single" || receiptMode === "bulk") {
-      setPersons([emptyPerson()]); // Just the payer/organization info
+      setPersons([emptyPerson()]);
     } else {
       setPersons(Array.from({ length: quantity }, () => emptyPerson()));
     }
@@ -126,12 +201,58 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
       }
     }
     
-    // Validate bulk receipt count
     if (receiptMode === "bulk" && bulkReceiptCount < 1) {
       return "Bulk receipt count must be at least 1";
     }
     
     return null;
+  }
+
+  function startPolling(txRef: string, generatedReceipts: Receipt[]) {
+    pollingStartRef.current = Date.now();
+    setPollingStatus("Waiting for payment confirmation...");
+
+    pollingRef.current = setInterval(async () => {
+      const elapsed = Date.now() - pollingStartRef.current;
+      if (elapsed > POLL_MAX_DURATION_MS) {
+        if (pollingRef.current) clearInterval(pollingRef.current);
+        pollingRef.current = null;
+        setPollingStatus("Payment check timed out. Please verify manually later.");
+        paymentInFlight.current = false;
+        setIsInitiating(false);
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/myimopay/pending?txRef=${encodeURIComponent(txRef)}`);
+        if (res.ok) {
+          const data = await res.json();
+          const result = data.results?.[0];
+          if (result?.status === "updated_to_success") {
+            if (pollingRef.current) clearInterval(pollingRef.current);
+            pollingRef.current = null;
+            setPollingStatus("");
+            setReceipts(generatedReceipts);
+            setStep("receipts");
+            paymentInFlight.current = false;
+            setIsInitiating(false);
+            refetchCollections();
+          } else if (result?.status === "updated_to_failed") {
+            if (pollingRef.current) clearInterval(pollingRef.current);
+            pollingRef.current = null;
+            setPollingStatus("");
+            alert("Payment was not successful. Please try again.");
+            paymentInFlight.current = false;
+            setIsInitiating(false);
+          } else {
+            const secondsLeft = Math.ceil((POLL_MAX_DURATION_MS - elapsed) / 1000);
+            setPollingStatus(`Waiting for payment confirmation... (${secondsLeft}s remaining)`);
+          }
+        }
+      } catch {
+        // Silently retry on network errors
+      }
+    }, POLL_INTERVAL_MS);
   }
 
   async function handleProceedToPayment() {
@@ -142,35 +263,75 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
 
     if (!instance || !selectedPaymentType || totalAmount <= 0) return;
 
-    if (!window.PaystackPop) {
-      alert("Payment gateway is still loading. Please try again in a moment.");
-      return;
-    }
-
     paymentInFlight.current = true;
     setIsInitiating(true);
 
     const reference = `PG-${instance.id.slice(-6)}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`.toUpperCase();
     const activeSplitCode = selectedPaymentType.splitCode || instance.splitCode;
-    // Use first person's email for Paystack (required field)
     const payerEmail = persons[0].email.trim();
     const payerName = quantity === 1 ? persons[0].name.trim() : `Group of ${quantity} (${persons[0].name.trim()})`;
 
+    // Pre-build receipts for when payment succeeds
+    const idclAmount = Number(((totalAmount * instance.idclPercent) / 100).toFixed(2));
+    const motAmount = Number((totalAmount - idclAmount).toFixed(2));
+    const collectedAt = new Date().toLocaleString();
+
+    let generatedReceipts: Receipt[];
+    if (receiptMode === "single") {
+      generatedReceipts = [{
+        index: 0,
+        name: persons[0].name,
+        email: persons[0].email,
+        fields: persons[0].fields,
+        paymentType: selectedPaymentType.name,
+        unitAmount: totalAmount,
+        totalAmount,
+        quantity,
+        reference,
+        collectedAt,
+        instanceName: instance.name,
+      }];
+    } else if (receiptMode === "bulk") {
+      generatedReceipts = Array.from({ length: bulkReceiptCount }, (_, i) => ({
+        index: i,
+        name: persons[0].name,
+        email: persons[0].email,
+        fields: persons[0].fields,
+        paymentType: selectedPaymentType.name,
+        unitAmount,
+        totalAmount,
+        quantity,
+        reference,
+        collectedAt,
+        instanceName: instance.name,
+      }));
+    } else {
+      generatedReceipts = persons.map((p, i) => ({
+        index: i,
+        name: p.name,
+        email: p.email,
+        fields: p.fields,
+        paymentType: selectedPaymentType.name,
+        unitAmount,
+        totalAmount,
+        quantity,
+        reference,
+        collectedAt,
+        instanceName: instance.name,
+      }));
+    }
+
     try {
-      const initRes = await fetch("/api/paystack/initialize", {
+      const initRes = await fetch("/api/myimopay/initialize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: payerEmail,
-          amount: Math.round(totalAmount * 100),
-          reference,
-          split_code: activeSplitCode,
-          metadata: {
-            payer_name: payerName,
-            instance_id: instance.id,
-            payment_type: selectedPaymentType.name,
-            quantity,
-          },
+          tx_ref: reference,
+          amount: totalAmount,
+          currency: "NGN",
+          customer_full_name: payerName,
+          customer_email: payerEmail || undefined,
+          settlement_order_id: activeSplitCode && activeSplitCode.startsWith("no-split") ? undefined : activeSplitCode,
         }),
       });
 
@@ -179,120 +340,71 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
         throw new Error(err.error || "Failed to initialize payment");
       }
 
-      new window.PaystackPop().newTransaction({
-        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY!,
-        email: payerEmail,
-        amount: Math.round(totalAmount * 100),
-        ref: reference,
-        split_code: activeSplitCode,
-        metadata: { payer_name: payerName, instance_id: instance.id, payment_type: selectedPaymentType.name, quantity },
+      const initData = await initRes.json();
+      const paymentLink = initData.payment_link;
 
-        onSuccess: async (transaction) => {
-          setIsVerifying(true);
-          try {
-            const idclAmount = Number(((totalAmount * instance.idclPercent) / 100).toFixed(2));
-            const motAmount = Number((totalAmount - idclAmount).toFixed(2));
-            const collectedAt = new Date().toLocaleString();
+      if (!paymentLink) {
+        throw new Error("No payment link received from MyIMO Pay");
+      }
 
-            const verifyRes = await fetch(`/api/paystack/verify/${transaction.reference}`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                instanceId: instance.id,
-                instanceName: instance.name,
-                splitCode: activeSplitCode,
-                paymentTypeId: selectedPaymentType.id,
-                paymentType: selectedPaymentType.name,
-                payer: payerName,
-                amount: totalAmount,
-                quantity,
-                idclAmount,
-                motAmount,
-                metadata: { persons: persons.map((p) => ({ name: p.name, email: p.email, ...p.fields })) },
-                collectedAt,
-              }),
-            });
+      // Open payment link in a new tab
+      const paymentWindow = window.open(paymentLink, "_blank");
 
-            if (!verifyRes.ok) {
-              const err = await verifyRes.json();
-              alert(`Payment received but could not be recorded. Reference: ${transaction.reference}\n\n${err.error ?? ""}`);
-              return;
+      // Start polling for payment status
+      startPolling(reference, generatedReceipts);
+
+      // Also try direct verify after a short delay (for quick completions)
+      setTimeout(async () => {
+        try {
+          const verifyRes = await fetch(`/api/myimopay/verify/${encodeURIComponent(reference)}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              instanceId: instance.id,
+              instanceName: instance.name,
+              splitCode: activeSplitCode,
+              paymentTypeId: selectedPaymentType.id,
+              paymentType: selectedPaymentType.name,
+              payer: payerName,
+              amount: totalAmount,
+              quantity,
+              idclAmount,
+              motAmount,
+              metadata: { persons: persons.map((p) => ({ name: p.name, email: p.email, ...p.fields })) },
+              collectedAt,
+            }),
+          });
+
+          if (verifyRes.ok) {
+            const collection = await verifyRes.json();
+            if (collection.paymentStatus === "success") {
+              if (pollingRef.current) clearInterval(pollingRef.current);
+              pollingRef.current = null;
+              setPollingStatus("");
+              setReceipts(generatedReceipts);
+              setStep("receipts");
+              paymentInFlight.current = false;
+              setIsInitiating(false);
+              refetchCollections();
             }
-
-            // Build receipts based on selected mode
-            let generatedReceipts: Receipt[] = [];
-            
-            if (receiptMode === "single") {
-              // Single consolidated receipt for the entire payment
-              generatedReceipts = [{
-                index: 0,
-                name: persons[0].name,
-                email: persons[0].email,
-                fields: persons[0].fields,
-                paymentType: selectedPaymentType.name,
-                unitAmount: totalAmount, // Full amount on single receipt
-                totalAmount,
-                quantity,
-                reference: transaction.reference,
-                collectedAt,
-                instanceName: instance.name,
-              }];
-            } else if (receiptMode === "bulk") {
-              // Generate multiple identical receipts for distribution
-              generatedReceipts = Array.from({ length: bulkReceiptCount }, (_, i) => ({
-                index: i,
-                name: persons[0].name,
-                email: persons[0].email,
-                fields: persons[0].fields,
-                paymentType: selectedPaymentType.name,
-                unitAmount,
-                totalAmount,
-                quantity,
-                reference: transaction.reference,
-                collectedAt,
-                instanceName: instance.name,
-              }));
-            } else {
-              // Individual receipts per person
-              generatedReceipts = persons.map((p, i) => ({
-                index: i,
-                name: p.name,
-                email: p.email,
-                fields: p.fields,
-                paymentType: selectedPaymentType.name,
-                unitAmount,
-                totalAmount,
-                quantity,
-                reference: transaction.reference,
-                collectedAt,
-                instanceName: instance.name,
-              }));
-            }
-            
-            setReceipts(generatedReceipts);
-            setStep("receipts");
-            refetchCollections();
-          } finally {
-            paymentInFlight.current = false;
-            setIsInitiating(false);
-            setIsVerifying(false);
           }
-        },
+        } catch {
+          // Polling will continue
+        }
+      }, 3000);
 
-        onCancel: () => {
-          paymentInFlight.current = false;
-          setIsInitiating(false);
-        },
-      });
-    } catch (error: any) {
+    } catch (err: unknown) {
+      const error = err as { message?: string };
       console.error("Payment error:", error);
-      alert(error.message || "Failed to start payment. Please try again.");
+      alert(error?.message || "Failed to start payment. Please try again.");
       paymentInFlight.current = false;
       setIsInitiating(false);
     }
   }
 
   function handleNewPayment() {
+    if (pollingRef.current) clearInterval(pollingRef.current);
+    pollingRef.current = null;
     setStep("reason");
     setSelectedPaymentTypeId("");
     setQuantity(1);
@@ -300,10 +412,11 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
     setReceiptMode("individual");
     setBulkReceiptCount(1);
     setReceipts([]);
+    setPollingStatus("");
   }
 
   if (instanceLoading) {
-    return <div className="py-10 text-center text-sm text-[var(--muted-foreground)]">Loading…</div>;
+    return <div className="py-10 text-center text-sm text-[var(--muted-foreground)]">Loading...</div>;
   }
 
   if (!instance) {
@@ -314,41 +427,36 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
           The selected instance is unavailable. Return to the payment instances page and choose another one.
         </p>
         <Link href="/pay" className="mt-4 inline-flex rounded-xl bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white">
-          Back to Instances
+          Back to Dashboard
         </Link>
       </div>
     );
   }
 
-  // ─── VERIFYING PAYMENT ────────────────────────────────────────────────────
+  // --- VERIFYING PAYMENT ---
   if (isVerifying) {
     return (
       <div className="flex min-h-[400px] flex-col items-center justify-center space-y-5 rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-8 text-center">
-        {/* Animated spinner */}
         <div className="relative h-16 w-16">
           <div className="absolute inset-0 rounded-full border-4 border-[var(--accent)]/20"></div>
           <div className="absolute inset-0 animate-spin rounded-full border-4 border-transparent border-t-[var(--accent)] border-r-[var(--accent)]"></div>
         </div>
-        
-        {/* Status text */}
         <div className="space-y-2">
           <h2 className="text-xl font-semibold text-[var(--foreground)]">Verifying Payment</h2>
           <p className="text-sm text-[var(--muted-foreground)]">
-            Please wait while we confirm your payment with Paystack...
+            Please wait while we confirm your payment with MyIMO Pay...
           </p>
         </div>
-        
-        {/* Additional info */}
         <div className="mt-4 rounded-xl bg-[var(--surface)] px-4 py-3">
           <p className="text-xs text-[var(--muted-foreground)]">
-            💳 Payment received • Generating receipts
+            Payment received - Generating receipts
           </p>
         </div>
       </div>
     );
   }
 
-  // ─── RECEIPTS STEP ────────────────────────────────────────────────────────
+  // --- RECEIPTS STEP ---
   if (step === "receipts") {
     const receiptModeLabel = 
       receiptMode === "single" 
@@ -359,12 +467,11 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
     
     return (
       <div className="space-y-5">
-        {/* Header row */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-xl font-semibold text-[var(--foreground)] sm:text-2xl">Payment Successful</h1>
             <p className="mt-1 text-sm text-[var(--muted-foreground)]">
-              {receiptModeLabel} ready — ₦{receipts[0]?.totalAmount.toLocaleString("en-NG", { minimumFractionDigits: 2 })} total
+              {receiptModeLabel} ready - ₦{receipts[0]?.totalAmount.toLocaleString("en-NG", { minimumFractionDigits: 2 })} total
             </p>
           </div>
           <div className="flex gap-2">
@@ -372,7 +479,7 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
               onClick={() => printReceipts(receipts)}
               className="flex-1 rounded-xl border border-[var(--accent)] px-4 py-2.5 text-sm font-semibold text-[var(--accent)] transition hover:bg-[var(--accent-soft)] sm:flex-none"
             >
-              🖨 Print Receipts
+              Print Receipts
             </button>
             <button
               onClick={handleNewPayment}
@@ -383,7 +490,6 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
           </div>
         </div>
 
-        {/* Receipt cards grid */}
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {receipts.map((r) => (
             <div key={r.index} className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-4">
@@ -422,23 +528,21 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
     );
   }
 
-  // ─── REASON + COUNT STEP ──────────────────────────────────────────────────
+  // --- REASON + COUNT STEP ---
   if (step === "reason") {
     return (
       <>
-        {/* Page header */}
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
-            <Link href="/pay" className="text-sm font-medium text-[var(--accent)]">← Instances</Link>
+            <Link href="/pay" className="text-sm font-medium text-[var(--accent)]">- Back to dashboard</Link>
             <h1 className="mt-1 text-xl font-semibold text-[var(--foreground)] sm:text-2xl">{instance.name}</h1>
           </div>
           <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--accent)] truncate max-w-[160px] sm:max-w-none">{instance.splitCode}</span>
         </div>
 
         <div className="mt-5 space-y-4">
-          {/* Step 1: Payment Reason */}
           <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4 sm:p-5">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">Step 1 — Payment Reason</p>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">Step 1 - Payment Reason</p>
             {instance.paymentTypes && instance.paymentTypes.length > 0 ? (
               <div className="space-y-2">
                 {instance.paymentTypes.map((pt) => (
@@ -475,18 +579,17 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
             )}
           </div>
 
-          {/* Step 2: Number of people — only shown after reason is selected */}
           {selectedPaymentType && (
             <>
               <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4 sm:p-5">
-                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">Step 2 — Number of People</p>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">Step 2 - Number of People</p>
               <div className="flex items-center gap-2 sm:gap-3">
                 <button
                   type="button"
                   onClick={() => setQuantity((q) => Math.max(1, q - 1))}
                   disabled={quantity <= 1}
                   className="h-12 w-12 shrink-0 rounded-xl border border-[var(--border)] bg-[var(--surface)] text-xl font-bold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:opacity-40"
-                >−</button>
+                >-</button>
                 <input
                   type="number"
                   min="1"
@@ -507,16 +610,14 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
               </div>
               {quantity > 1 && (
                 <p className="mt-2 text-xs text-[var(--muted-foreground)]">
-                  {quantity} × ₦{unitAmount.toLocaleString("en-NG", { minimumFractionDigits: 2 })} — one charge covers all {quantity} people
+                  {quantity} x ₦{unitAmount.toLocaleString("en-NG", { minimumFractionDigits: 2 })} - one charge covers all {quantity} people
                 </p>
               )}
             </div>
 
-            {/* Step 3: Receipt Generation Mode */}
             <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4 sm:p-5">
-              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">Step 3 — Receipt Generation</p>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">Step 3 - Receipt Generation</p>
               <div className="space-y-2">
-                {/* Single Receipt Option */}
                 <label
                   className={`flex cursor-pointer items-start gap-3 rounded-xl border-2 p-3 transition ${
                     receiptMode === "single"
@@ -533,14 +634,13 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
                     className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--accent)]"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-[var(--foreground)]">📄 Single Consolidated Receipt</p>
+                    <p className="font-semibold text-[var(--foreground)]">Single Consolidated Receipt</p>
                     <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
                       One receipt with full payment amount. Ideal for schools, organizations, or bulk payments.
                     </p>
                   </div>
                 </label>
 
-                {/* Individual Receipts Option */}
                 <label
                   className={`flex cursor-pointer items-start gap-3 rounded-xl border-2 p-3 transition ${
                     receiptMode === "individual"
@@ -557,14 +657,13 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
                     className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--accent)]"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-[var(--foreground)]">👥 Individual Receipts</p>
+                    <p className="font-semibold text-[var(--foreground)]">Individual Receipts</p>
                     <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
                       Separate receipt for each person ({quantity} {quantity === 1 ? "receipt" : "receipts"}). Each shows their individual amount.
                     </p>
                   </div>
                 </label>
 
-                {/* Bulk Receipts Option */}
                 <label
                   className={`flex cursor-pointer items-start gap-3 rounded-xl border-2 p-3 transition ${
                     receiptMode === "bulk"
@@ -581,14 +680,13 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
                     className="mt-0.5 h-4 w-4 shrink-0 accent-[var(--accent)]"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-[var(--foreground)]">📋 Bulk Receipts (Multiple Copies)</p>
+                    <p className="font-semibold text-[var(--foreground)]">Bulk Receipts (Multiple Copies)</p>
                     <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
                       Generate multiple identical receipts for distribution. Perfect when you need extras.
                     </p>
                   </div>
                 </label>
 
-                {/* Bulk receipt count selector */}
                 {receiptMode === "bulk" && (
                   <div className="mt-3 rounded-xl border border-[var(--accent-soft)] bg-[var(--accent-soft)]/20 p-3">
                     <p className="mb-2 text-xs font-semibold text-[var(--muted-foreground)]">Number of Receipts to Generate</p>
@@ -598,7 +696,7 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
                         onClick={() => setBulkReceiptCount((c) => Math.max(1, c - 1))}
                         disabled={bulkReceiptCount <= 1}
                         className="h-10 w-10 shrink-0 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-lg font-bold text-[var(--foreground)] transition hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:opacity-40"
-                      >−</button>
+                      >-</button>
                       <input
                         type="number"
                         min="1"
@@ -625,7 +723,7 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
                 onClick={handleContinueToDetails}
                 className="mt-4 h-12 w-full rounded-xl bg-[var(--accent)] text-sm font-semibold text-white transition hover:brightness-95 active:scale-[0.98]"
               >
-                Continue — {
+                Continue - {
                   receiptMode === "single" 
                     ? "Enter Payer Details" 
                     : receiptMode === "bulk"
@@ -633,14 +731,13 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
                     : quantity === 1 
                     ? "Fill In Details" 
                     : `Details for ${quantity} People`
-                } →
+                }
               </button>
             </div>
             </>
           )}
         </div>
 
-        {/* Recent Collections */}
         <section className="mt-5 rounded-2xl border border-[var(--border)] bg-[var(--surface-soft)] p-4">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -655,7 +752,6 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
             </div>
           </div>
 
-          {/* Mobile-friendly list */}
           <div className="mt-4 space-y-2 sm:hidden">
             {instanceCollections.length === 0 ? (
               <p className="py-4 text-center text-sm text-[var(--muted-foreground)]">No payments collected yet.</p>
@@ -676,7 +772,6 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
             ))}
           </div>
 
-          {/* Desktop table */}
           <div className="mt-4 hidden overflow-x-auto rounded-xl border border-[var(--border)] bg-[var(--surface)] sm:block">
             <table className="min-w-full border-collapse text-sm">
               <thead className="bg-[var(--surface-alt)] text-left text-xs uppercase tracking-widest text-[var(--muted-foreground)]">
@@ -710,7 +805,6 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
           </div>
         </section>
 
-        {/* Collection detail modal */}
         {viewingCollection && (
           <div
             className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center"
@@ -720,18 +814,16 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
               className="w-full max-w-lg rounded-2xl border border-[var(--border)] bg-[var(--surface)] shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Header */}
               <div className="flex items-start justify-between border-b border-[var(--border)] px-5 py-4">
                 <div className="min-w-0 pr-4">
                   <p className="truncate text-base font-bold text-[var(--foreground)]">{viewingCollection.payer}</p>
                   <p className="text-xs text-[var(--muted-foreground)]">
-                    {viewingCollection.paymentType} · {viewingCollection.collectedAt}
+                    {viewingCollection.paymentType} - {viewingCollection.collectedAt}
                   </p>
                 </div>
-                <button onClick={() => setViewingCollection(null)} className="shrink-0 text-2xl leading-none text-[var(--muted-foreground)] hover:text-[var(--foreground)]">×</button>
+                <button onClick={() => setViewingCollection(null)} className="shrink-0 text-2xl leading-none text-[var(--muted-foreground)] hover:text-[var(--foreground)]">x</button>
               </div>
 
-              {/* Body */}
               <div className="max-h-[55vh] overflow-y-auto px-5 py-4 space-y-4">
                 <div className="flex flex-wrap gap-2">
                   <div className="flex-1 min-w-[90px] rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-2">
@@ -744,18 +836,18 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
                       <p className="mt-0.5 font-bold text-[var(--foreground)]">{viewingCollection.quantity}</p>
                     </div>
                   )}
-                  {viewingCollection.paystackReference && (
+                  {viewingCollection.paymentReference && (
                     <div className="flex-1 min-w-[110px] rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] px-3 py-2 overflow-hidden">
                       <p className="text-xs text-[var(--muted-foreground)]">Reference</p>
-                      <p className="mt-0.5 truncate font-mono text-xs text-[var(--foreground)]">{viewingCollection.paystackReference}</p>
+                      <p className="mt-0.5 truncate font-mono text-xs text-[var(--foreground)]">{viewingCollection.paymentReference}</p>
                     </div>
                   )}
                 </div>
 
-                {Array.isArray((viewingCollection.metadata as any)?.persons) && (
+                {Array.isArray((viewingCollection.metadata as PaymentCollectionMetadata).persons) && (
                   <div className="space-y-2">
                     <p className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">Payer Details</p>
-                    {((viewingCollection.metadata as any).persons as Array<Record<string, string>>).map((p, i) => (
+                    {((viewingCollection.metadata as PaymentCollectionMetadata).persons as Array<Record<string, string>>).map((p: Record<string, string>, i: number) => (
                       <div key={i} className="rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] p-3">
                         <p className="text-sm font-semibold text-[var(--foreground)]">
                           {(viewingCollection.quantity ?? 1) > 1 && (
@@ -775,7 +867,6 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
                 )}
               </div>
 
-              {/* Footer */}
               <div className="flex gap-2 border-t border-[var(--border)] px-5 py-4">
                 <button onClick={() => setViewingCollection(null)} className="h-11 flex-1 rounded-xl border border-[var(--border)] text-sm font-semibold text-[var(--foreground)] transition hover:bg-[var(--surface-soft)]">
                   Close
@@ -784,7 +875,7 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
                   onClick={() => { printReceipts(buildReceiptsFromCollection(viewingCollection)); }}
                   className="h-11 flex-[2] rounded-xl bg-[var(--accent)] text-sm font-semibold text-white transition hover:brightness-95"
                 >
-                  🖨 Reprint Receipt
+                  Reprint Receipt
                 </button>
               </div>
             </div>
@@ -794,7 +885,7 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
     );
   }
 
-  // ─── DETAILS STEP (per-person forms) ─────────────────────────────────────
+  // --- DETAILS STEP (per-person forms) ---
   return (
     <>
       {/* Loading overlay for payment initiation */}
@@ -802,24 +893,22 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-8 shadow-2xl">
             <div className="flex flex-col items-center space-y-5">
-              {/* Animated spinner */}
               <div className="relative h-20 w-20">
                 <div className="absolute inset-0 rounded-full border-4 border-[var(--accent)]/20"></div>
                 <div className="absolute inset-0 animate-spin rounded-full border-4 border-transparent border-t-[var(--accent)] border-r-[var(--accent)]"></div>
               </div>
-              
-              {/* Status text */}
               <div className="text-center space-y-2">
                 <h2 className="text-xl font-semibold text-[var(--foreground)]">Initiating Payment</h2>
                 <p className="text-sm text-[var(--muted-foreground)] max-w-xs">
-                  Connecting to Paystack payment gateway...
+                  Connecting to MyIMO Pay payment gateway...
                 </p>
+                {pollingStatus && (
+                  <p className="text-xs text-[var(--accent)] animate-pulse">{pollingStatus}</p>
+                )}
               </div>
-              
-              {/* Progress indicator */}
               <div className="flex items-center gap-2 text-xs text-[var(--muted-foreground)]">
                 <div className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] animate-pulse"></div>
-                <span>Opening secure payment window</span>
+                <span>Payment link opened in new tab</span>
               </div>
             </div>
           </div>
@@ -829,10 +918,10 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <button type="button" onClick={() => setStep("reason")} className="text-sm font-medium text-[var(--accent)]">← Back</button>
+          <button type="button" onClick={() => setStep("reason")} className="text-sm font-medium text-[var(--accent)]">- Back</button>
           <h1 className="mt-1 text-xl font-semibold text-[var(--foreground)] sm:text-2xl">{instance.name}</h1>
           <p className="mt-0.5 text-xs text-[var(--muted-foreground)] sm:text-sm">
-            {selectedPaymentType?.name} · {quantity} {quantity === 1 ? "person" : "people"}
+            {selectedPaymentType?.name} - {quantity} {quantity === 1 ? "person" : "people"}
           </p>
         </div>
         <div className="rounded-xl border border-[var(--accent-soft)] bg-[var(--accent-soft)]/20 px-3 py-2 text-right">
@@ -841,7 +930,6 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
         </div>
       </div>
 
-      {/* Progress bar for multi-person */}
       {quantity > 1 && (
         <div className="mt-3 flex gap-1">
           {Array.from({ length: quantity }).map((_, i) => (
@@ -895,7 +983,7 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
                       onChange={(e) => updatePersonField(i, field.key, e.target.value)}
                       className="h-11 w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-sm text-[var(--foreground)] outline-none focus:border-[var(--accent)]"
                     >
-                      <option value="">Select {field.label}…</option>
+                      <option value="">Select {field.label}...</option>
                       {field.options.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
                     </select>
                   ) : (
@@ -921,7 +1009,7 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
           onClick={() => setStep("reason")}
           className="h-12 flex-1 rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] text-sm font-semibold text-[var(--foreground)] transition hover:bg-[var(--border)] sm:flex-none sm:px-6"
         >
-          ← Back
+          - Back
         </button>
         <button
           type="button"
@@ -930,11 +1018,10 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
           className="h-12 flex-[3] rounded-xl bg-[var(--accent)] text-sm font-semibold text-white transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isInitiating
-            ? "Initiating…"
+            ? pollingStatus || "Initiating..."
             : `Pay ₦${totalAmount.toLocaleString("en-NG", { minimumFractionDigits: 2 })}`}
         </button>
       </div>
     </>
   );
 }
-

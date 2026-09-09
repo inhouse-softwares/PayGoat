@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@/prisma/generated/prisma";
 import { requireAuth, getInstanceFilter, withAuth } from "@/lib/auth-utils";
 import { PaginationSchema } from "@/lib/validation";
 
@@ -9,6 +10,10 @@ export const GET = withAuth(async (request: NextRequest) => {
   
   const searchParams = request.nextUrl.searchParams;
   const requestedInstanceId = searchParams.get("instanceId");
+  const fromDate = searchParams.get("fromDate");
+  const toDate = searchParams.get("toDate");
+  const paymentTypeId = searchParams.get("paymentTypeId");
+  const search = searchParams.get("search");
   
   // Parse pagination params
   const paginationResult = PaginationSchema.safeParse({
@@ -27,13 +32,39 @@ export const GET = withAuth(async (request: NextRequest) => {
   
   // If operator is trying to query different instance, use their filter
   // If admin requests specific instance, use that
-  const where = requestedInstanceId && !roleFilter.instanceId
+  const instanceFilter = requestedInstanceId && !roleFilter.instanceId
     ? { instanceId: requestedInstanceId }
     : roleFilter.instanceId
     ? roleFilter
     : requestedInstanceId
     ? { instanceId: requestedInstanceId }
-    : undefined;
+    : {};
+
+  // Build where clause incrementally
+  const where: Prisma.PaymentCollectionWhereInput = { ...instanceFilter };
+
+  // Date range conditions
+  if (fromDate) {
+    where.createdAt = { ...(where.createdAt as object), gte: new Date(fromDate) };
+  }
+  if (toDate) {
+    const endDate = new Date(toDate);
+    endDate.setHours(23, 59, 59, 999);
+    where.createdAt = { ...(where.createdAt as object), lte: endDate };
+  }
+
+  // Payment type filter
+  if (paymentTypeId) {
+    where.paymentTypeId = paymentTypeId;
+  }
+
+  // Text search on payer and paymentReference
+  if (search) {
+    where.OR = [
+      { payer: { contains: search } },
+      { paymentReference: { contains: search } },
+    ];
+  }
 
   // Execute count and data queries in parallel
   const [collections, total] = await Promise.all([

@@ -1,13 +1,15 @@
 import { redirect } from "next/navigation";
-import { getSessionRole } from "@/lib/auth";
-import { PayWorkspace } from "./pay-workspace";
+import { getSession } from "@/lib/auth";
+import { OperatorDashboardClient } from "./operator-dashboard-client";
 
 export default async function PayPage() {
-  const role = await getSessionRole();
+  const session = await getSession();
 
-  if (!role) {
-    redirect("/login");
+  if (!session) redirect("/login");
+
+  if (session.role === "admin") {
+    redirect("/dashboard");
   }
 
-  return <PayWorkspace role={role} />;
+  return <OperatorDashboardClient />;
 }

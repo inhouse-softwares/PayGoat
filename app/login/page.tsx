@@ -1,19 +1,22 @@
-"use client"
+"use client";
 import Link from "next/link";
 import { ThemeToggle } from "../components/theme-toggle";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import type { UserRole } from "@/lib/auth-types";
-import Image from "next/image";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  const { setRole } = useAuth();
+  const { setRole, setInstanceId } = useAuth();
   const router = useRouter();
 
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
@@ -34,99 +37,110 @@ export default function LoginPage() {
     }
 
     const data = await response.json();
-
-    // Update context BEFORE navigating so PortalChrome has the role immediately
     setRole(data.role as UserRole);
+    setInstanceId(data.instanceId ?? null);
     if (data.role === "admin") {
       router.push("/dashboard");
     } else {
-      // Operator goes directly to their instance's payment page
-      router.push(data.instanceId ? `/pay/${data.instanceId}` : "/pay");
+      router.push(data.instanceId ? `/pay` : "/pay");
     }
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4" style={{ background: "var(--page-bg)" }}>
-      <main className="w-full max-w-md rounded-3xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-[0_24px_60px_-30px_rgba(20,30,60,0.35)] sm:p-8">
-        <div className="mb-4 flex justify-end">
+    <div
+      className="flex min-h-screen items-center justify-center p-4"
+      style={{ background: "var(--page-bg)" }}
+    >
+      <div className="w-full max-w-md animate-fade-in">
+        {/* Logo + Theme toggle */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-[var(--radius-md)] bg-[var(--accent)] flex items-center justify-center">
+              <span className="text-white font-bold text-sm">PG</span>
+            </div>
+            <div>
+              <p className="text-lg font-bold text-[var(--foreground)] tracking-tight">
+                PayGoat
+              </p>
+              <p className="text-xs text-[var(--muted-foreground)]">
+                Payment collections, simplified.
+              </p>
+            </div>
+          </div>
           <ThemeToggle />
         </div>
 
-        <div className="mb-6 flex items-center gap-3">
-          <Image src="/logo.svg" alt="PayGoat" width={80} height={80} className="object-contain"/>
-          <div>
-            <p className="text-lg font-semibold text-[var(--foreground)]">Paygoat</p>
-            <p className="text-xs text-[var(--muted-foreground)]">Payment collections, simplified.</p>
-          </div>
-        </div>
+        {/* Login card */}
+        <div className="bg-[var(--surface)] rounded-[var(--radius-2xl)] border border-[var(--border)] shadow-[var(--shadow-lg)] p-6 sm:p-8">
+          <h1 className="text-2xl font-bold text-[var(--foreground)] tracking-tight">
+            Welcome back
+          </h1>
+          <p className="mt-1.5 text-sm text-[var(--muted-foreground)]">
+            Sign in to manage payments, settlements, and logs.
+          </p>
 
-        <h1 className="text-2xl font-semibold text-[var(--foreground)]">Welcome back</h1>
-        <p className="mt-1 text-sm text-[var(--muted-foreground)]">
-          Sign in to manage payments, settlements, and logs.
-        </p>
-
-        <form onSubmit={handleLogin} className="mt-6 space-y-4">
-          <div>
-            <label htmlFor="email" className="mb-1 block text-sm font-medium text-[var(--foreground)]">
-              Email
-            </label>
-            <input
+          <form onSubmit={handleLogin} className="mt-6 space-y-4">
+            <Input
+              label="Email"
               id="email"
-              name="email"
               type="email"
-              placeholder="example@example.com"
-              className="h-11 w-full rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] px-4 text-sm text-[var(--foreground)] outline-none transition focus:border-[var(--accent)]"
+              placeholder="you@example.com"
+              icon={<Mail size={16} />}
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
-          </div>
 
-          <div>
-            <label htmlFor="password" className="mb-1 block text-sm font-medium text-[var(--foreground)]">
-              Password
-            </label>
-            <input
+            <Input
+              label="Password"
               id="password"
-              name="password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="Enter your password"
-              className="h-11 w-full rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] px-4 text-sm text-[var(--foreground)] outline-none transition focus:border-[var(--accent)]"
+              icon={<Lock size={16} />}
+              rightIcon={
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="cursor-pointer"
+                  tabIndex={-1}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              }
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-          </div>
 
-          {/* {hasInvalidCredentials ? (
-            <p className="rounded-lg border border-[#f2c7c7] bg-[#fde8e8] px-3 py-2 text-sm text-[#a12a2a]">
-              Invalid email or password.
-            </p>
-          ) : null} */}
+            {error && (
+              <div className="rounded-[var(--radius-md)] bg-[var(--danger-soft)] border border-[var(--danger)]/20 px-4 py-3 text-sm text-[var(--danger)]">
+                {error}
+              </div>
+            )}
 
-          {error && (
-            <p className="rounded-lg border border-[var(--danger)] bg-[var(--danger)]/10 px-3 py-2 text-sm text-[var(--danger)]">
-              {error}
-            </p>
-          )}
+            <Button
+              type="submit"
+              loading={isSubmitting}
+              className="w-full"
+              size="lg"
+            >
+              Sign In
+            </Button>
+          </form>
+        </div>
 
-          <button
-            type="submit"
-            className={`h-11 w-full rounded-xl bg-[var(--accent)] text-sm font-semibold text-white transition hover:brightness-95 ${isSubmitting ? "cursor-not-allowed opacity-50" : ""}`}
-            disabled={isSubmitting}
+        {/* Footer */}
+        <p className="mt-6 text-center text-xs text-[var(--muted-foreground)]">
+          Need access? Contact your system administrator or{" "}
+          <Link
+            href="/"
+            className="font-medium text-[var(--accent)] hover:underline"
           >
-            {isSubmitting ? "Signing In..." : "Sign In"}
-          </button>
-        </form>
-
-        <p className="mt-5 text-xs text-[var(--muted-foreground)]">
-          Need access? Contact your system administrator or return to{" "}
-          <Link href="/" className="font-medium text-[var(--accent)]">
-            home
+            return home
           </Link>
           .
         </p>
-      </main>
+      </div>
     </div>
   );
 }

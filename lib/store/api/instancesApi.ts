@@ -1,17 +1,19 @@
 import { baseApi } from "./baseApi";
-import type { PaymentInstance } from "@/lib/payment-store";
+import type { PaymentCollection, PaymentInstance } from "@/lib/payment-store";
 
 export const instancesApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getInstances: builder.query<PaymentInstance[], void>({
       query: () => "/instances",
-      transformResponse: (response: any) => {
+      transformResponse: (response: unknown): PaymentInstance[] => {
         // Handle paginated response from API
-        return response?.data || response || [];
+        if (!response) return [];
+        const data = response as { data?: PaymentInstance[] } | PaymentInstance[];
+        return 'data' in data && Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : [];
       },
       providesTags: ["PaymentInstance"],
     }),
-    getInstanceById: builder.query<PaymentInstance & { collections: any[] }, string>({
+    getInstanceById: builder.query<PaymentInstance & { collections: PaymentCollection[] }, string>({
       query: (id) => `/instances/${id}`,
       providesTags: (result, error, id) => [{ type: "PaymentInstance", id }],
     }),

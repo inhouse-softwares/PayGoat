@@ -42,7 +42,7 @@ export default function LandingPage() {
             </span>
           </h1>
           <p className="mt-6 text-lg leading-8 text-[var(--muted-foreground)] sm:text-xl">
-            A modern, multi-instance payment collection platform powered by Paystack. 
+            A modern, multi-instance payment collection platform powered by MyIMO Pay. 
             Manage unlimited payment instances, track collections, and generate instant receipts—all in one place.
           </p>
           <div className="mt-10 flex items-center justify-center gap-4">
@@ -95,9 +95,9 @@ export default function LandingPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
-              <h3 className="mt-4 text-lg font-semibold text-[var(--foreground)]">Paystack Integration</h3>
+              <h3 className="mt-4 text-lg font-semibold text-[var(--foreground)]">MyIMO Pay Integration</h3>
               <p className="mt-2 text-sm text-[var(--muted-foreground)]">
-                Secure payment processing with automatic revenue splitting through Paystack subaccounts. Support for cards and bank transfers.
+                Secure payment processing with automatic revenue splitting through MyIMO Pay settlement orders. Support for cards and bank transfers.
               </p>
             </div>
 
@@ -221,7 +221,7 @@ export default function LandingPage() {
                     <div>
                       <h3 className="text-lg font-semibold text-[var(--foreground)]">Secure & Reliable</h3>
                       <p className="mt-1 text-[var(--muted-foreground)]">
-                        Built on Paystack's robust infrastructure with enterprise-grade security and 99.9% uptime.
+                        Built on MyIMO Pay's robust infrastructure with enterprise-grade security and 99.9% uptime.
                       </p>
                     </div>
                   </div>
@@ -249,7 +249,7 @@ export default function LandingPage() {
                     <div>
                       <h3 className="text-lg font-semibold text-[var(--foreground)]">No Setup Fees</h3>
                       <p className="mt-1 text-[var(--muted-foreground)]">
-                        Free to set up and use. Only pay standard Paystack transaction fees.
+                        Free to set up and use. Only pay standard MyIMO Pay transaction fees.
                       </p>
                     </div>
                   </div>
@@ -338,7 +338,7 @@ export default function LandingPage() {
               <h3 className="text-sm font-semibold text-[var(--foreground)]">Features</h3>
               <ul className="mt-4 space-y-2 text-sm text-[var(--muted-foreground)]">
                 <li>Multi-Instance Management</li>
-                <li>Paystack Integration</li>
+                <li>MyIMO Pay Integration</li>
                 <li>Receipt Generation</li>
                 <li>Real-Time Analytics</li>
               </ul>
@@ -359,7 +359,7 @@ export default function LandingPage() {
           </div>
 
           <div className="mt-8 border-t border-[var(--border)] pt-8 text-center text-sm text-[var(--muted-foreground)]">
-            <p>&copy; {new Date().getFullYear()} Paygoat. All rights reserved. Powered by Paystack.</p>
+            <p>&copy; {new Date().getFullYear()} Paygoat. All rights reserved. Powered by MyIMO Pay.</p>
           </div>
         </div>
       </footer>

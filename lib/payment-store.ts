@@ -4,7 +4,7 @@ export type PaymentEntity = {
   businessName?: string;
   accountNumber?: string;
   bankCode?: string;
-  paystackSubaccountCode?: string;
+  myimopaySubaccountId?: string | null;
 };
 
 export type PaymentType = {
@@ -24,7 +24,7 @@ export type FormField = {
   label: string;
   type: FormFieldType;
   required: boolean;
-  options?: string[]; // for select type
+  options?: string[];
 };
 
 export type PaymentInstance = {
@@ -36,6 +36,15 @@ export type PaymentInstance = {
   entities: PaymentEntity[];
   formFields: FormField[];
   paymentTypes?: PaymentType[];
+  _count?: { collections: number };
+  _sum?: { collections: { amount: number | null } };
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type PaymentCollectionMetadata = {
+  persons?: Array<Record<string, string>>;
+  [key: string]: unknown;
 };
 
 export type PaymentCollection = {
@@ -50,9 +59,98 @@ export type PaymentCollection = {
   quantity?: number;
   idclAmount: number;
   motAmount: number;
-  metadata: Record<string, string>;
-  paystackReference?: string;
+  metadata: PaymentCollectionMetadata;
+  paymentReference?: string;
+  transactionId?: string;
+  paymentStatus?: string;
   collectedAt: string;
+  createdAt?: string;
+};
+
+export type Operator = {
+  id: string;
+  email: string;
+  plainPassword: string | null;
+  instanceId: string | null;
+  lastLoginAt: string | null;
+  createdAt: string;
+  instance: { id: string; name: string; splitCode: string } | null;
+};
+
+export type Profile = {
+  id: string;
+  email: string;
+  role: string;
+  lastLoginAt: string | null;
+  instanceId: string | null;
+};
+
+// MyIMO Pay API response types
+export type MyIMOApiResponseHeader = {
+  is_success: boolean;
+  remark?: string;
+  code?: number;
+};
+
+export type MyIMOApiResponse<T = unknown> = {
+  header: MyIMOApiResponseHeader;
+  data: T;
+};
+
+export type MyIMOPayTransactionData = {
+  status: number | string;
+  identifier?: string;
+  tx_reference?: string;
+  amount?: number;
+  currency?: string;
+  customer_full_name?: string;
+  customer_email?: string;
+};
+
+export type MyIMOPayInitData = {
+  link?: string;
+  reference?: string;
+  [key: string]: unknown;
+};
+
+export type MyIMOPayBankData = {
+  bank_name: string;
+  bank_code: string;
+};
+
+export type MyIMOPayAccountResolveData = {
+  account_name: string;
+  account_number?: string;
+  bank_code?: string;
+};
+
+// Network error helper type
+export type NetworkError = Error & {
+  cause?: { code?: string };
+};
+
+export function isNetworkError(error: unknown): error is NetworkError {
+  if (!(error instanceof Error)) return false;
+  const err = error as NetworkError;
+  return (
+    err.cause?.code === "ENOTFOUND" ||
+    err.cause?.code === "ECONNREFUSED" ||
+    err.cause?.code === "ETIMEDOUT" ||
+    err.cause?.code === "EAI_AGAIN" ||
+    (err.name === "TypeError" && err.message?.includes("fetch failed"))
+  );
+}
+
+// Receipt types for the payment form
+export type ReceiptPerson = {
+  name: string;
+  [key: string]: string;
+};
+
+export type Receipt = {
+  id: string;
+  name: string;
+  fields: ReceiptPerson;
 };
 
 export const PAYMENT_INSTANCES_STORAGE_KEY = "paygoat-payment-instances";

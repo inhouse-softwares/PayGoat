@@ -6,13 +6,13 @@ import type { UserRole } from "@/lib/auth-types";
 import Image from "next/image";
 
 type PortalHeaderProps = {
-  currentPath: "/dashboard" | "/pay" | "/pay/configure" | "/logs" | "/operators" | "/profile";
+  currentPath: "/dashboard" | "/pay" | "/instances" | "/instances/configure" | "/logs" | "/operators" | "/profile";
   role: UserRole;
 };
 
 const adminLinks = [
   { href: "/dashboard", label: "Dashboard" },
-  { href: "/pay/configure", label: "Configure" },
+  { href: "/instances/configure", label: "Configure" },
   { href: "/operators", label: "Operators" },
   { href: "/logs", label: "Logs" },
 ] as const;

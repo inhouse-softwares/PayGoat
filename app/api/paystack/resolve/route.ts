@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isNetworkError } from "@/lib/payment-store";
+
+const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
 
 export async function GET(request: NextRequest) {
-  const secretKey = process.env.PAYSTACK_SECRET_KEY;
-
-  if (!secretKey) {
+  if (!PAYSTACK_SECRET_KEY) {
     return NextResponse.json({ error: "Paystack not configured" }, { status: 500 });
   }
 
@@ -19,40 +20,34 @@ export async function GET(request: NextRequest) {
     const res = await fetch(
       `https://api.paystack.co/bank/resolve?account_number=${encodeURIComponent(accountNumber)}&bank_code=${encodeURIComponent(bankCode)}`,
       {
-        headers: { Authorization: `Bearer ${secretKey}` },
+        headers: {
+          Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
+        },
         cache: "no-store",
       },
     );
 
     const data = await res.json();
 
-    if (!res.ok || !data.status) {
+    if (!data.status || !data.data) {
       return NextResponse.json(
         { error: data.message || "Could not resolve account. Check account number and bank." },
         { status: 422 },
       );
     }
 
-    return NextResponse.json({ accountName: data.data.account_name as string });
-  } catch (error: any) {
-    console.error("Error resolving account:", error);
+    return NextResponse.json({ accountName: data.data.account_name });
+  } catch (error: unknown) {
+    console.error("Error resolving account with Paystack:", error);
 
-    // Check for network errors
-    const isNetworkError = 
-      error.cause?.code === 'ENOTFOUND' ||
-      error.cause?.code === 'ECONNREFUSED' ||
-      error.cause?.code === 'ETIMEDOUT' ||
-      error.cause?.code === 'EAI_AGAIN' ||
-      (error.name === 'TypeError' && error.message?.includes('fetch failed'));
-
-    if (isNetworkError) {
+    if (isNetworkError(error)) {
       return NextResponse.json(
-        { 
-          error: "No internet connection", 
+        {
+          error: "No internet connection",
           details: "Unable to verify account details. Please check your internet connection.",
-          type: "NETWORK_ERROR"
-        }, 
-        { status: 503 }
+          type: "NETWORK_ERROR",
+        },
+        { status: 503 },
       );
     }
 

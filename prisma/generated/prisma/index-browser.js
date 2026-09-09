@@ -169,7 +169,9 @@ exports.Prisma.PaymentCollectionScalarFieldEnum = {
   idclAmount: 'idclAmount',
   motAmount: 'motAmount',
   metadata: 'metadata',
-  paystackReference: 'paystackReference',
+  paymentReference: 'paymentReference',
+  transactionId: 'transactionId',
+  paymentStatus: 'paymentStatus',
   collectedAt: 'collectedAt',
   createdAt: 'createdAt'
 };

@@ -72,7 +72,9 @@ model PaymentCollection {
   idclAmount         Float
   motAmount          Float
   metadata           Json     @default("{}")
-  paystackReference  String?  @unique
+  paymentReference   String?  @unique
+  transactionId      String?  @unique
+  paymentStatus      String   @default("pending")
   collectedAt        String
   createdAt          DateTime @default(now())
   
@@ -84,4 +86,5 @@ model PaymentCollection {
   @@index([collectedAt])
   @@index([payer])
   @@index([createdAt])
+  @@index([paymentStatus])
 }

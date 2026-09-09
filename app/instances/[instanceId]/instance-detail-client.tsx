@@ -4,10 +4,24 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useGetInstanceByIdQuery, useDeleteInstanceMutation, useUpdateInstanceMutation } from "@/lib/store/api/instancesApi";
-import type { FormFieldType } from "@/lib/payment-store";
+import type { FormField, FormFieldType } from "@/lib/payment-store";
+import { Card } from "../../components/ui/card";
+import { Badge } from "../../components/ui/badge";
+import { Button } from "../../components/ui/button";
+import { Modal } from "../../components/ui/modal";
+import { StatusBadge } from "../../components/ui/status-badge";
+import { Avatar } from "../../components/ui/avatar";
+import { EmptyState } from "../../components/ui/empty-state";
+import { Skeleton } from "../../components/ui/skeleton";
+import { PageHeader } from "../../components/ui/page-header";
+import { Pencil, Trash2, TrendingUp, CreditCard } from "lucide-react";
 
 type EditPaymentType = { id?: string; name: string; description: string; amount: string };
 type EditFormField = { key: string; label: string; type: FormFieldType; required: boolean; options: string };
+
+function formatNaira(amount: number) {
+  return `₦${amount.toLocaleString("en-NG", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
 export function InstanceDetailClient({ instanceId }: { instanceId: string }) {
   const router = useRouter();
@@ -36,7 +50,7 @@ export function InstanceDetailClient({ instanceId }: { instanceId: string }) {
       }))
     );
     setEditFormFields(
-      ((instanceData.formFields as any[]) ?? []).map((f) => ({
+      (instanceData.formFields ?? []).map((f: FormField) => ({
         key: f.key,
         label: f.label,
         type: f.type as FormFieldType,
@@ -65,7 +79,7 @@ export function InstanceDetailClient({ instanceId }: { instanceId: string }) {
             description: pt.description.trim() || undefined,
             amount: Number(pt.amount),
           })),
-          formFields: editFormFields.map((f) => ({
+          formFields: editFormFields.map((f): FormField => ({
             key: f.key.trim() || f.label.trim().toLowerCase().replace(/\s+/g, "_"),
             label: f.label.trim(),
             type: f.type,
@@ -73,12 +87,13 @@ export function InstanceDetailClient({ instanceId }: { instanceId: string }) {
             options: f.type === "select" && f.options
               ? f.options.split(",").map((o) => o.trim()).filter(Boolean)
               : undefined,
-          })) as any,
+          })),
         },
       }).unwrap();
       setShowEdit(false);
-    } catch (err: any) {
-      alert(err?.data?.error || err?.message || "Failed to save changes");
+    } catch (err: unknown) {
+      const error = err as { data?: { error?: string }; message?: string };
+      alert(error?.data?.error || error?.message || "Failed to save changes");
     }
   }
 
@@ -102,8 +117,14 @@ export function InstanceDetailClient({ instanceId }: { instanceId: string }) {
 
   if (isLoading || !instance) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <p className="text-[var(--muted-foreground)]">Loading...</p>
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-48" />
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-3">
+          <Skeleton className="h-28 rounded-[var(--radius-xl)]" />
+          <Skeleton className="h-28 rounded-[var(--radius-xl)]" />
+          <Skeleton className="h-28 rounded-[var(--radius-xl)]" />
+        </div>
+        <Skeleton className="h-64 rounded-[var(--radius-xl)]" />
       </div>
     );
   }
@@ -126,167 +147,116 @@ export function InstanceDetailClient({ instanceId }: { instanceId: string }) {
   };
 
   return (
-    <>
-      <div className="space-y-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <Link
-                href="/pay"
-                className="text-[var(--muted-foreground)] transition hover:text-[var(--foreground)]"
-              >
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </Link>
-              <h1 className="text-xl font-semibold text-[var(--foreground)] sm:text-2xl">
-                {instance.name}
-              </h1>
-              <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--accent)] max-w-[160px] truncate sm:max-w-none">
-                {instance.splitCode}
-              </span>
-            </div>
-            <p className="mt-1.5 text-sm text-[var(--muted-foreground)]">
-              {instance.summary}
-            </p>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <button
-              onClick={openEdit}
-              className="rounded-xl border border-[var(--border)] bg-[var(--surface-alt)] px-3 py-2 text-sm font-semibold text-[var(--foreground)] transition hover:bg-[var(--border)] sm:px-4"
-            >
+    <div className="animate-fade-in">
+      <PageHeader
+        title={instance.name}
+        description={instance.summary}
+        backLink={{ href: "/pay", label: "Back to Instances" }}
+        actions={
+          <>
+            <Button variant="secondary" size="sm" onClick={openEdit} icon={<Pencil size={14} />}>
               Edit
-            </button>
-            <button
-              onClick={() => setShowDeleteConfirm(true)}
-              className="rounded-xl border border-[var(--danger)] bg-[var(--danger)]/10 px-3 py-2 text-sm font-semibold text-[var(--danger)] transition hover:bg-[var(--danger)]/20 sm:px-4"
-            >
-              <span className="sm:hidden">Delete</span>
-              <span className="hidden sm:inline">Delete Instance</span>
-            </button>
+            </Button>
+            <Button variant="danger" size="sm" onClick={() => setShowDeleteConfirm(true)} icon={<Trash2 size={14} />}>
+              Delete
+            </Button>
+          </>
+        }
+      />
+
+      {/* Stats */}
+      <div className="grid gap-4 grid-cols-2 md:grid-cols-3 mb-6">
+        <Card padding="md" hover>
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-[var(--radius-md)] bg-[var(--accent-soft)]">
+              <TrendingUp size={20} className="text-[var(--accent)]" />
+            </div>
+            <div>
+              <p className="text-xs text-[var(--muted-foreground)] font-medium">Total Collected</p>
+              <p className="text-xl font-bold text-[var(--foreground)]">{formatNaira(totalCollected)}</p>
+              <p className="text-xs text-[var(--muted-foreground)]">{collections.length} transaction{collections.length !== 1 ? "s" : ""}</p>
+            </div>
           </div>
+        </Card>
+
+        {entityTotals.map((entity) => (
+          <Card key={entity.name} padding="md" hover>
+            <div className="flex items-center gap-3">
+              <Avatar name={entity.name} size="md" />
+              <div>
+                <p className="text-xs text-[var(--muted-foreground)] font-medium">{entity.name} ({entity.percentage}%)</p>
+                <p className="text-xl font-bold text-[var(--foreground)]">{formatNaira(entity.amount)}</p>
+                <p className="text-xs text-[var(--muted-foreground)]">Split allocation</p>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      {/* Transaction History */}
+      <Card padding="none" className="mb-6">
+        <div className="px-5 py-4 border-b border-[var(--border)]">
+          <h2 className="text-base font-semibold text-[var(--foreground)]">Transaction History</h2>
+          <p className="text-xs text-[var(--muted-foreground)]">All payments collected through this instance</p>
         </div>
 
-        <div className="grid gap-3 grid-cols-2 md:grid-cols-3">
-          <div className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5">
-            <p className="text-sm text-[var(--muted-foreground)]">
-              Total Collected
-            </p>
-            <p className="mt-1.5 text-2xl font-semibold text-[var(--foreground)] sm:text-3xl">
-              ₦{totalCollected.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </p>
-            <p className="mt-1 text-xs text-[var(--muted-foreground)]">
-              {collections.length} transaction{collections.length !== 1 ? "s" : ""}
-            </p>
+        {collections.length === 0 ? (
+          <EmptyState
+            icon={<CreditCard size={24} />}
+            title="No transactions yet"
+            description="Payments will appear here once collected."
+          />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-[var(--border)]">
+                  <th className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Date</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Payer</th>
+                  <th className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">Amount</th>
+                  {entities.map((entity) => (
+                    <th key={entity.name} className="text-left px-5 py-3 text-xs font-semibold uppercase tracking-wider text-[var(--muted-foreground)]">{entity.name}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--border)]">
+                {collections.map((collection) => (
+                  <tr key={collection.id} className="hover:bg-[var(--surface-soft)] transition-colors">
+                    <td className="px-5 py-3 text-[var(--muted-foreground)]">
+                      {new Date(collection.collectedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                    </td>
+                    <td className="px-5 py-3 font-medium text-[var(--foreground)]">{collection.payer}</td>
+                    <td className="px-5 py-3 font-semibold text-[var(--foreground)]">{formatNaira(collection.amount)}</td>
+                    {entities.map((entity) => {
+                      const entityAmount = (collection.amount * entity.percentage) / 100;
+                      return (
+                        <td key={entity.name} className="px-5 py-3 text-[var(--muted-foreground)]">{formatNaira(entityAmount)}</td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
+        )}
+      </Card>
 
-          {entityTotals.map((entity) => (
-            <div
-              key={entity.name}
-              className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5"
-            >
-              <p className="text-sm text-[var(--muted-foreground)]">
-                {entity.name} ({entity.percentage}%)
-              </p>
-              <p className="mt-1.5 text-2xl font-semibold text-[var(--foreground)] sm:text-3xl">
-                ₦{entity.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </p>
-              <p className="mt-1 text-xs text-[var(--muted-foreground)]">
-                Split allocation
-              </p>
+      {/* Revenue Split */}
+      <Card padding="md">
+        <h2 className="text-base font-semibold text-[var(--foreground)] mb-1">Revenue Split Configuration</h2>
+        <p className="text-xs text-[var(--muted-foreground)] mb-4">Percentage allocation for each entity</p>
+        <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+          {entities.map((entity) => (
+            <div key={entity.name} className="flex items-center gap-3 p-3 rounded-[var(--radius-md)] bg-[var(--surface-soft)] border border-[var(--border)]">
+              <Avatar name={entity.name} size="sm" />
+              <div>
+                <p className="text-sm font-medium text-[var(--foreground)]">{entity.name}</p>
+                <p className="text-lg font-bold text-[var(--accent)]">{entity.percentage}%</p>
+              </div>
             </div>
           ))}
         </div>
-
-        <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)]">
-          <div className="border-b border-[var(--border)] px-4 py-4">
-            <h2 className="text-lg font-semibold text-[var(--foreground)]">
-              Transaction History
-            </h2>
-            <p className="mt-1 text-sm text-[var(--muted-foreground)]">
-              All payments collected through this instance
-            </p>
-          </div>
-
-          {collections.length === 0 ? (
-            <div className="px-4 py-12 text-center">
-              <p className="text-sm text-[var(--muted-foreground)]">
-                No transactions yet for this instance
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-sm">
-                <thead className="bg-[var(--surface-alt)] text-left text-xs uppercase tracking-[0.1em] text-[var(--muted-foreground)]">
-                  <tr>
-                    <th className="px-4 py-3 font-semibold">Date</th>
-                    <th className="px-4 py-3 font-semibold">Payer</th>
-                    <th className="px-4 py-3 font-semibold">Amount</th>
-                    {entities.map((entity) => (
-                      <th key={entity.name} className="px-4 py-3 font-semibold">
-                        {entity.name}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {collections.map((collection) => (
-                    <tr
-                      key={collection.id}
-                      className="border-t border-[var(--border)] text-[var(--foreground)] even:bg-[var(--surface-soft)]"
-                    >
-                      <td className="px-4 py-3 text-[var(--muted-foreground)]">
-                        {new Date(collection.collectedAt).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </td>
-                      <td className="px-4 py-3">{collection.payer}</td>
-                      <td className="px-4 py-3 font-semibold">
-                        ₦{collection.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </td>
-                      {entities.map((entity) => {
-                        const entityAmount = (collection.amount * entity.percentage) / 100;
-                        return (
-                          <td key={entity.name} className="px-4 py-3">
-                            ₦{entityAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-
-        <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5">
-          <h2 className="text-lg font-semibold text-[var(--foreground)]">
-            Revenue Split Configuration
-          </h2>
-          <p className="mt-1 text-sm text-[var(--muted-foreground)]">
-            Percentage allocation for each entity
-          </p>
-
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-            {entities.map((entity) => (
-              <div
-                key={entity.name}
-                className="rounded-xl border border-[var(--border)] bg-[var(--surface-soft)] p-4"
-              >
-                <p className="text-sm font-medium text-[var(--foreground)]">
-                  {entity.name}
-                </p>
-                <p className="mt-1 text-2xl font-semibold text-[var(--accent)]">
-                  {entity.percentage}%
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
-      </div>
+      </Card>
 
       {showEdit && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center">
@@ -486,6 +456,6 @@ export function InstanceDetailClient({ instanceId }: { instanceId: string }) {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

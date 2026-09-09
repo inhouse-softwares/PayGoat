@@ -1,5 +1,10 @@
 import { redirect } from "next/navigation";
 import { getSessionRole } from "@/lib/auth";
+import { Card } from "../components/ui/card";
+import { Badge } from "../components/ui/badge";
+import { PageHeader } from "../components/ui/page-header";
+import { EmptyState } from "../components/ui/empty-state";
+import { FileText, AlertCircle, CheckCircle, Clock } from "lucide-react";
 
 export default async function LogsPage() {
   const role = await getSessionRole();
@@ -13,43 +18,80 @@ export default async function LogsPage() {
   }
 
   const logs = [
-    { id: "LOG-2291", action: "Payment Created", actor: "Admin", time: "Mar 06, 2026 09:24" },
-    { id: "LOG-2290", action: "Split Updated", actor: "Admin", time: "Mar 06, 2026 09:02" },
-    { id: "LOG-2289", action: "Payment Failed", actor: "System", time: "Mar 05, 2026 17:41" },
+    {
+      id: "LOG-2291",
+      action: "Payment Created",
+      actor: "Admin",
+      time: "Mar 06, 2026 09:24",
+      type: "success" as const,
+    },
+    {
+      id: "LOG-2290",
+      action: "Split Updated",
+      actor: "Admin",
+      time: "Mar 06, 2026 09:02",
+      type: "info" as const,
+    },
+    {
+      id: "LOG-2289",
+      action: "Payment Failed",
+      actor: "System",
+      time: "Mar 05, 2026 17:41",
+      type: "danger" as const,
+    },
   ];
 
-  return (
-    <>
-      <h1 className="text-2xl font-semibold text-[var(--foreground)]">Logs</h1>
-      <p className="mt-1 text-sm text-[var(--muted-foreground)]">
-        Review payment actions and operational events.
-      </p>
+  const typeIcons = {
+    success: <CheckCircle size={16} className="text-[var(--success)]" />,
+    info: <Clock size={16} className="text-[var(--accent)]" />,
+    danger: <AlertCircle size={16} className="text-[var(--danger)]" />,
+  };
 
-      <section className="mt-5 overflow-x-auto rounded-2xl border border-[var(--border)] bg-[var(--surface)]">
-        <table className="min-w-full border-collapse text-sm">
-          <thead className="bg-[var(--surface-alt)] text-left text-xs uppercase tracking-[0.1em] text-[var(--muted-foreground)]">
-            <tr>
-              <th className="px-4 py-3 font-semibold">Log ID</th>
-              <th className="px-4 py-3 font-semibold">Action</th>
-              <th className="px-4 py-3 font-semibold">Actor</th>
-              <th className="px-4 py-3 font-semibold">Time</th>
-            </tr>
-          </thead>
-          <tbody>
+  return (
+    <div className="animate-fade-in">
+      <PageHeader
+        title="Logs"
+        description="Review payment actions and operational events."
+      />
+
+      {logs.length === 0 ? (
+        <EmptyState
+          icon={<FileText size={32} />}
+          title="No logs yet"
+          description="Audit events will appear here as actions are performed."
+        />
+      ) : (
+        <Card padding="none">
+          <div className="divide-y divide-[var(--border)]">
             {logs.map((log) => (
-              <tr
+              <div
                 key={log.id}
-                className="border-t border-[var(--border)] text-[var(--foreground)] even:bg-[var(--surface-soft)]"
+                className="flex items-center gap-4 px-5 py-4 hover:bg-[var(--surface-soft)] transition-colors"
               >
-                <td className="px-4 py-3 font-mono text-xs font-medium text-[var(--foreground)]">{log.id}</td>
-                <td className="px-4 py-3">{log.action}</td>
-                <td className="px-4 py-3">{log.actor}</td>
-                <td className="px-4 py-3 text-[var(--muted-foreground)]">{log.time}</td>
-              </tr>
+                <div className="p-2 rounded-full bg-[var(--surface-alt)]">
+                  {typeIcons[log.type]}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-[var(--foreground)]">
+                    {log.action}
+                  </p>
+                  <p className="text-xs text-[var(--muted-foreground)]">
+                    {log.actor}
+                  </p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-xs font-mono text-[var(--muted-foreground)]">
+                    {log.id}
+                  </p>
+                  <p className="text-xs text-[var(--muted-foreground)]">
+                    {log.time}
+                  </p>
+                </div>
+              </div>
             ))}
-          </tbody>
-        </table>
-      </section>
-    </>
+          </div>
+        </Card>
+      )}
+    </div>
   );
 }

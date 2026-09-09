@@ -1,15 +1,15 @@
 # PayGoat
 
-A multi-tenant payment collection platform built for schools, businesses, and organizations in Nigeria. Powered by Paystack.
+A multi-tenant payment collection platform built for schools, businesses, and organizations in Nigeria. Powered by MyIMO Pay.
 
 ## Overview
 
-PayGoat lets admins create **payment instances** (e.g. school fees, event tickets, product sales, donations), each with its own revenue-split configuration, custom form fields, and payment types. Payments are automatically split across multiple bank accounts via Paystack subaccounts. Operators collect payments through generated forms and produce print-ready receipts.
+PayGoat lets admins create **payment instances** (e.g. school fees, event tickets, product sales, donations), each with its own revenue-split configuration, custom form fields, and payment types. Payments are automatically split across multiple bank accounts via MyIMO Pay settlement orders. Operators collect payments through generated forms and produce print-ready receipts.
 
 ### Key Features
 
 - **Multi-Instance Payment Management** -- Create and configure independent payment instances with custom forms
-- **Automated Revenue Splitting** -- Payments auto-split across multiple bank accounts via Paystack split codes
+- **Automated Revenue Splitting** -- Payments auto-split across multiple bank accounts via MyIMO Pay settlement orders
 - **Role-Based Access Control** -- Admin (full access) and Operator (restricted to assigned instance)
 - **Dashboard & Analytics** -- Total collections, per-instance breakdowns, recent transaction tables
 - **Receipt Generation** -- Print-ready HTML receipts formatted for 80mm thermal printers
@@ -26,7 +26,7 @@ PayGoat lets admins create **payment instances** (e.g. school fees, event ticket
 | Database | PostgreSQL (Neon) |
 | ORM | Prisma 7 |
 | Auth | Cookie-based sessions, bcrypt |
-| Payments | Paystack API |
+| Payments | MyIMO Pay API |
 | Validation | Zod 4 |
 | Icons | Lucide React |
 | Animations | Lottie |
@@ -51,7 +51,8 @@ paygoat/
 │       ├── auth/               # Login / logout
 │       ├── instances/          # CRUD for payment instances
 │       ├── collections/        # CRUD for payment collections
-│       ├── paystack/           # Transaction init, verify, banks, account resolve
+│       ├── myimopay/            # Transaction init, verify, banks, account resolve, reconciliation
+│       ├── pay/                  # Callback, webhook endpoints
 │       ├── profile/            # Password change
 │       └── admin/              # Operator listing
 ├── lib/                        # Shared utilities
@@ -75,7 +76,7 @@ paygoat/
 
 - Node.js 18+
 - A [Neon](https://neon.tech) PostgreSQL database
-- A [Paystack](https://paystack.com) account (test keys work for development)
+- A [MyIMO Pay](https://myimopay.com) account (demo keys work for development)
 
 ### 1. Install Dependencies
 
@@ -90,8 +91,14 @@ Create a `.env` file in the project root:
 ```env
 DATABASE_URL="postgresql://user:password@host/database?sslmode=require"
 NEXT_PUBLIC_APP_URL=http://localhost:3000
-PAYSTACK_SECRET_KEY=sk_test_...
-NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=pk_test_...
+
+# MyIMO Pay API Credentials
+MYIMOPAY_API_KEY=your-xp-key-here
+MYIMOPAY_MERCHANT_KEY=your-mp-key-here
+MYIMOPAY_AUTH_TOKEN=your-authorization-token-here
+NEXT_PUBLIC_MYIMOPAY_UI_KEY=your-uix-pky-here
+MYIMOPAY_API_URL=https://apipg.demo.myimopay.com
+MYIMOPAY_WEBHOOK_SECRET=your-webhook-secret-here
 ```
 
 ### 3. Set Up the Database
@@ -123,11 +130,11 @@ Visit [http://localhost:3000](http://localhost:3000).
 
 **User** -- Admin and operator accounts with role-based access, linked to a payment instance (operators only).
 
-**PaymentInstance** -- A payment collection target (e.g. "School Fees 2026"). Contains a Paystack split code, revenue-split entities, and custom form fields.
+**PaymentInstance** -- A payment collection target (e.g. "School Fees 2026"). Contains a MyIMO Pay settlement order ID, revenue-split entities, and custom form fields.
 
 **PaymentType** -- Individual payment categories within an instance (e.g. "Tuition", "Hostel"), each with its own amount and optional split configuration.
 
-**PaymentCollection** -- Records of collected payments with payer info, amounts, quantities, Paystack reference, and metadata.
+**PaymentCollection** -- Records of collected payments with payer info, amounts, quantities, MyIMO Pay transaction reference, and metadata.
 
 ## API Endpoints
 
@@ -144,10 +151,13 @@ Visit [http://localhost:3000](http://localhost:3000).
 | POST | `/api/collections` | Record a collection |
 | GET | `/api/collections/[id]` | Get collection details |
 | DELETE | `/api/collections/[id]` | Delete collection |
-| POST | `/api/paystack/initialize` | Initialize Paystack transaction |
-| POST | `/api/paystack/verify/[reference]` | Verify and record payment |
-| GET | `/api/paystack/banks` | List Nigerian banks |
-| GET | `/api/paystack/resolve` | Resolve bank account name |
+| POST | `/api/myimopay/initialize` | Initialize MyIMO Pay transaction |
+| POST | `/api/myimopay/verify/[txRef]` | Verify and record payment |
+| GET  | `/api/myimopay/pending` | Reconcile pending transactions |
+| GET  | `/api/myimopay/banks` | List Nigerian banks |
+| GET  | `/api/myimopay/resolve` | Resolve bank account name |
+| GET  | `/api/pay/callback` | Handle payment redirect callback |
+| POST | `/api/pay/webhook` | Receive payment webhook notifications |
 | GET | `/api/profile` | Get current user profile |
 | PATCH | `/api/profile` | Change password |
 | GET | `/api/admin/operators` | List operators (admin only) |
@@ -207,7 +217,7 @@ refactor: extract auth helpers into lib/auth-utils
 3. Run `npm install`, then `npx prisma generate && npx prisma migrate dev && npx prisma db seed`.
 4. Run `npm run dev` and verify you can log in.
 
-**Never commit `.env` files or Paystack secret keys.** Use test keys for local development.
+**Never commit `.env` files or MyIMO Pay API keys.** Use demo keys for local development.
 
 ## Production Deployment
 
@@ -223,7 +233,7 @@ PayGoat is designed to deploy on [Vercel](https://vercel.com).
    npx prisma db seed
    ```
 4. Change all default passwords immediately.
-5. Switch Paystack keys from test to live.
+5. Switch MyIMO Pay keys from demo to production.
 6. Enable database backups in Neon.
 
 ## License
