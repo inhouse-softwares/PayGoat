@@ -19,14 +19,14 @@ type NavItem = {
 const adminNav: NavItem[] = [
   { href: "/dashboard", label: "Home", icon: <LayoutDashboard size={22} /> },
   { href: "/instances", label: "Instances", icon: <Settings size={22} /> },
+  { href: "/transactions", label: "Transactions", icon: <FileText size={22} /> },
   { href: "/operators", label: "Operators", icon: <Users size={22} /> },
-  { href: "/logs", label: "Logs", icon: <FileText size={22} /> },
 ];
 
 const operatorNav: NavItem[] = [
   { href: "/pay", label: "Home", icon: <LayoutDashboard size={22} /> },
-  { href: "/pay/transactions", label: "History", icon: <FileText size={22} /> },
-  { href: "/profile", label: "Profile", icon: <UserCircle size={22} /> },
+  { href: "/transactions", label: "Transactions", icon: <FileText size={22} /> },
+  { href: "/profile", label: "Profile", icon: <User size={22} /> },
 ];
 
 interface MobileNavProps {

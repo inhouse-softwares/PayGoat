@@ -28,7 +28,7 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
 }
 
 // Route definitions
-const protectedRoutes = ["/dashboard", "/pay", "/logs", "/profile", "/operators"];
+const protectedRoutes = ["/dashboard", "/pay", "/transactions", "/logs", "/profile", "/operators"];
 const adminOnlyRoutes = ["/dashboard", "/logs", "/operators"];
 const operatorOnlyRoutes = ["/pay"];
 

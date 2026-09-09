@@ -10,6 +10,7 @@ import { useAuth } from "@/lib/auth-context";
 type PortalRoute =
   | "/dashboard"
   | "/pay"
+  | "/transactions"
   | "/instances"
   | "/instances/configure"
   | "/logs"
@@ -26,8 +27,8 @@ function getPortalRoute(pathname: string): PortalRoute | null {
   if (pathname === "/instances" || pathname.startsWith("/instances/")) {
     return "/instances";
   }
-  if (pathname === "/pay/transactions" || pathname.startsWith("/pay/transactions/")) {
-    return "/pay";
+  if (pathname === "/transactions" || pathname.startsWith("/transactions/")) {
+    return "/transactions";
   }
   if (pathname === "/pay" || pathname.startsWith("/pay/")) {
     return "/pay";

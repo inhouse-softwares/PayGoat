@@ -10,10 +10,12 @@ import {
   LogOut,
   Sun,
   Moon,
+  User,
 } from "lucide-react";
 import type { UserRole } from "@/lib/auth-types";
 import { logoutAction } from "../actions/auth";
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 type NavItem = {
   href: string;
@@ -24,14 +26,15 @@ type NavItem = {
 const adminNav: NavItem[] = [
   { href: "/dashboard", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
   { href: "/instances", label: "Instances", icon: <Settings size={20} /> },
+  { href: "/transactions", label: "Transactions", icon: <FileText size={20} /> },
   { href: "/operators", label: "Operators", icon: <Users size={20} /> },
   { href: "/logs", label: "Logs", icon: <FileText size={20} /> },
 ];
 
 const operatorNav: NavItem[] = [
   { href: "/pay", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
-  { href: "/pay/transactions", label: "Transactions", icon: <FileText size={20} /> },
-  { href: "/profile", label: "Profile", icon: <UserCircle size={20} /> },
+  { href: "/transactions", label: "Transactions", icon: <FileText size={20} /> },
+  { href: "/profile", label: "Profile", icon: <User size={20} /> },
 ];
 
 interface SidebarProps {
@@ -45,8 +48,8 @@ export function Sidebar({ currentPath, role }: SidebarProps) {
   return (
     <aside className="hidden lg:flex flex-col fixed left-0 top-0 bottom-0 w-60 bg-[var(--surface)] border-r border-[var(--border)] z-40">
       <div className="flex items-center gap-2.5 px-5 h-16 border-b border-[var(--border)]">
-        <div className="w-8 h-8 rounded-[var(--radius-md)] bg-[var(--accent)] flex items-center justify-center">
-          <span className="text-white font-bold text-sm">PG</span>
+        <div className="rounded-[var(--radius-md)] flex items-center justify-center">
+          <Image src="/logo.svg" alt="PayGoat" width={36} height={36} className="w-12 object-cover" />
         </div>
         <span className="text-base font-bold text-[var(--foreground)] tracking-tight">
           PayGoat

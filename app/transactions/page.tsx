@@ -7,5 +7,10 @@ export default async function TransactionHistoryPage() {
 
   if (!session) redirect("/login");
 
-  return <TransactionHistoryClient />;
+  return (
+    <TransactionHistoryClient
+      role={session.role}
+      instanceId={session.instanceId ?? null}
+    />
+  );
 }
