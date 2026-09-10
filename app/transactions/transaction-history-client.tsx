@@ -152,7 +152,7 @@ export function TransactionHistoryClient({ role, instanceId }: TransactionHistor
       <PageHeader
         title="Transaction History"
         description={isAdmin ? "All transactions across every instance." : "Search and filter your payment transactions."}
-        backLink={{ href: isAdmin ? "/dashboard" : "/pay", label: "Dashboard" }}
+        backLink={{ href: "/dashboard", label: "Dashboard" }}
       />
 
       {/* Filters */}

@@ -25,7 +25,7 @@ const adminNav: NavItem[] = [
 ];
 
 const operatorNav: NavItem[] = [
-  { href: "/pay", label: "Home", icon: <LayoutDashboard size={22} /> },
+  { href: "/dashboard", label: "Home", icon: <LayoutDashboard size={22} /> },
   { href: "/transactions", label: "Transactions", icon: <FileText size={22} /> },
   { href: "/profile", label: "Profile", icon: <User size={22} /> },
 ];

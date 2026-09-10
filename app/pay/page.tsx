@@ -1,15 +1,15 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { OperatorDashboardClient } from "./operator-dashboard-client";
+import { PaymentCollectionForm } from "./payment-collection-form";
 
 export default async function PayPage() {
   const session = await getSession();
 
   if (!session) redirect("/login");
 
-  if (session.role === "admin") {
+  if (session.role !== "operator" || !session.instanceId) {
     redirect("/dashboard");
   }
 
-  return <OperatorDashboardClient />;
+  return <PaymentCollectionForm instanceId={session.instanceId} />;
 }

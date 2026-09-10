@@ -28,8 +28,8 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
 }
 
 // Route definitions
-const protectedRoutes = ["/dashboard", "/pay", "/transactions", "/logs", "/profile", "/operators"];
-const adminOnlyRoutes = ["/dashboard", "/logs", "/operators"];
+const protectedRoutes = ["/dashboard", "/pay", "/transactions", "/logs", "/profile", "/operators", "/instances"];
+const adminOnlyRoutes = ["/logs", "/operators", "/instances"];
 const operatorOnlyRoutes = ["/pay"];
 
 // API routes that require authentication (handled by individual route handlers)
@@ -93,28 +93,11 @@ export function middleware(request: NextRequest) {
 
   // ====================================================================
   // ADMIN ROUTE PROTECTION
-  // Operators trying to access admin-only routes → redirect to their workspace
+  // Operators trying to access admin-only routes → redirect to their dashboard
   // This ensures operator failures don't affect admin functionality
   // ====================================================================
   if (hasSession && role === "operator" && isAdminOnlyPath(pathname)) {
-    const operatorHomeUrl = new URL("/pay", request.url);
-    if (session.instanceId) {
-      operatorHomeUrl.pathname = `/pay/${session.instanceId}`;
-    }
-    return addSecurityHeaders(NextResponse.redirect(operatorHomeUrl));
-  }
-
-  // ====================================================================
-  // OPERATOR INSTANCE ISOLATION
-  // Operators can only access their assigned instance's payment page
-  // Admins have unrestricted access to all instances
-  // ====================================================================
-  if (hasSession && role === "operator" && session?.instanceId) {
-    const instanceMatch = pathname.match(/^\/pay\/([^/]+)/);
-    if (instanceMatch && instanceMatch[1] !== session.instanceId) {
-      // Operator trying to access different instance → redirect to their instance
-      return addSecurityHeaders(NextResponse.redirect(new URL(`/pay/${session.instanceId}`, request.url)));
-    }
+    return addSecurityHeaders(NextResponse.redirect(new URL("/dashboard", request.url)));
   }
 
   // ====================================================================
@@ -123,7 +106,7 @@ export function middleware(request: NextRequest) {
   if (pathname === "/login" && hasSession) {
     const redirectUrl = role === "admin" 
       ? new URL("/dashboard", request.url)
-      : new URL(`/pay/${session?.instanceId ?? ""}`, request.url);
+      : new URL("/dashboard", request.url);
     return addSecurityHeaders(NextResponse.redirect(redirectUrl));
   }
 
@@ -133,7 +116,7 @@ export function middleware(request: NextRequest) {
   if (pathname === "/" && hasSession) {
     const homeUrl = role === "admin"
       ? new URL("/dashboard", request.url)
-      : new URL(`/pay/${session?.instanceId ?? ""}`, request.url);
+      : new URL("/dashboard", request.url);
     return addSecurityHeaders(NextResponse.redirect(homeUrl));
   }
 

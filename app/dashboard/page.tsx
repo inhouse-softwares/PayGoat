@@ -1,17 +1,18 @@
 import { redirect } from "next/navigation";
-import { getSessionRole } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import { DashboardClient } from "./dashboard-client";
+import { OperatorDashboardClient } from "../pay/operator-dashboard-client";
 
 export default async function DashboardPage() {
-  const role = await getSessionRole();
+  const session = await getSession();
 
-  if (!role) {
+  if (!session) {
     redirect("/login");
   }
 
-  if (role !== "admin") {
-    redirect("/pay");
+  if (session.role === "admin") {
+    return <DashboardClient />;
   }
 
-  return <DashboardClient />;
+  return <OperatorDashboardClient />;
 }

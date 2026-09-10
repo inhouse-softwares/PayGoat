@@ -426,7 +426,7 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
         <p className="mt-2 text-sm text-[var(--muted-foreground)]">
           The selected instance is unavailable. Return to the payment instances page and choose another one.
         </p>
-        <Link href="/pay" className="mt-4 inline-flex rounded-xl bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white">
+        <Link href="/dashboard" className="mt-4 inline-flex rounded-xl bg-[var(--accent)] px-4 py-2 text-sm font-semibold text-white">
           Back to Dashboard
         </Link>
       </div>
@@ -534,7 +534,7 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
       <>
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
-            <Link href="/pay" className="text-sm font-medium text-[var(--accent)]">- Back to dashboard</Link>
+            <Link href="/dashboard" className="text-sm font-medium text-[var(--accent)]">- Back to dashboard</Link>
             <h1 className="mt-1 text-xl font-semibold text-[var(--foreground)] sm:text-2xl">{instance.name}</h1>
           </div>
           <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--accent)] truncate max-w-[160px] sm:max-w-none">{instance.splitCode}</span>

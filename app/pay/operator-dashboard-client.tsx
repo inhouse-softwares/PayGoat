@@ -225,7 +225,7 @@ export function OperatorDashboardClient() {
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {paymentTypes.map((pt) => (
-              <Link key={pt.id} href={`/pay/${instance.id}?paymentType=${pt.id}`}>
+              <Link key={pt.id} href={`/pay?paymentType=${pt.id}`}>
                 <Card padding="md" hover className="h-full group cursor-pointer">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">

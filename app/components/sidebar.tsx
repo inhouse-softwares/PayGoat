@@ -11,6 +11,7 @@ import {
   Sun,
   Moon,
   User,
+  DollarSign,
 } from "lucide-react";
 import type { UserRole } from "@/lib/auth-types";
 import { logoutAction } from "../actions/auth";
@@ -32,7 +33,8 @@ const adminNav: NavItem[] = [
 ];
 
 const operatorNav: NavItem[] = [
-  { href: "/pay", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
+  { href: "/dashboard", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
+  { href: "/pay", label: "Collect", icon: <DollarSign size={20} /> },
   { href: "/transactions", label: "Transactions", icon: <FileText size={20} /> },
   { href: "/profile", label: "Profile", icon: <User size={20} /> },
 ];
