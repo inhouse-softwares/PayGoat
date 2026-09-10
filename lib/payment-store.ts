@@ -7,6 +7,24 @@ export type PaymentEntity = {
   myimopaySubaccountId?: string | null;
 };
 
+export const PAYMENT_GATEWAYS = ["myimopay", "paystack"] as const;
+export type PaymentGateway = (typeof PAYMENT_GATEWAYS)[number];
+
+export type MyImoPayGatewayConfig = {
+  settlementId: string;
+};
+
+export type PaystackGatewayConfig = Record<string, never>;
+
+export type GatewayConfigByProvider = {
+  myimopay: MyImoPayGatewayConfig;
+  paystack: PaystackGatewayConfig;
+};
+
+export type PaymentGatewayConfiguration = {
+  [P in PaymentGateway]: { gateway: P; config: GatewayConfigByProvider[P] }
+}[PaymentGateway];
+
 export type PaymentType = {
   id: string;
   instanceId: string;
@@ -34,6 +52,8 @@ export type PaymentInstance = {
   idclPercent: number;
   summary: string;
   entities: PaymentEntity[];
+  paymentGateway: PaymentGateway;
+  gatewayConfig: MyImoPayGatewayConfig | PaystackGatewayConfig;
   formFields: FormField[];
   paymentTypes?: PaymentType[];
   _count?: { collections: number };
@@ -60,6 +80,8 @@ export type PaymentCollection = {
   idclAmount: number;
   motAmount: number;
   metadata: PaymentCollectionMetadata;
+  idempotencyKey?: string;
+  paymentLink?: string;
   paymentReference?: string;
   transactionId?: string;
   paymentStatus?: string;

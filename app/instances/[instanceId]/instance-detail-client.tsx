@@ -130,10 +130,7 @@ export function InstanceDetailClient({ instanceId }: { instanceId: string }) {
   }
 
   const totalCollected = collections.reduce((sum, c) => sum + c.amount, 0);
-  const entities = instance.entities || [
-    { name: "IDCL", percentage: instance.idclPercent },
-    { name: "MOT", percentage: 100 - instance.idclPercent },
-  ];
+  const entities = instance.entities || [];
   const entityTotals = entities.map((entity) => ({
     name: entity.name,
     percentage: entity.percentage,
@@ -243,10 +240,10 @@ export function InstanceDetailClient({ instanceId }: { instanceId: string }) {
 
       {/* Revenue Split */}
       <Card padding="md">
-        <h2 className="text-base font-semibold text-[var(--foreground)] mb-1">Revenue Split Configuration</h2>
-        <p className="text-xs text-[var(--muted-foreground)] mb-4">Percentage allocation for each entity</p>
+        <h2 className="text-base font-semibold text-[var(--foreground)] mb-1">Payment Gateway</h2>
+        <p className="text-xs text-[var(--muted-foreground)] mb-4">Settlement beneficiaries are managed by the payment provider.</p>
         <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-          {entities.map((entity) => (
+          {entities.length > 0 ? entities.map((entity) => (
             <div key={entity.name} className="flex items-center gap-3 p-3 rounded-[var(--radius-md)] bg-[var(--surface-soft)] border border-[var(--border)]">
               <Avatar name={entity.name} size="sm" />
               <div>
@@ -254,7 +251,7 @@ export function InstanceDetailClient({ instanceId }: { instanceId: string }) {
                 <p className="text-lg font-bold text-[var(--accent)]">{entity.percentage}%</p>
               </div>
             </div>
-          ))}
+          )) : <p className="text-sm text-[var(--muted-foreground)]">{instance.paymentGateway === "myimopay" ? "MyIMO Pay settlement configured" : "Paystack (coming soon)"}</p>}
         </div>
       </Card>
 

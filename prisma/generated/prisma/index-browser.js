@@ -139,6 +139,8 @@ exports.Prisma.PaymentInstanceScalarFieldEnum = {
   idclPercent: 'idclPercent',
   summary: 'summary',
   entities: 'entities',
+  paymentGateway: 'paymentGateway',
+  gatewayConfig: 'gatewayConfig',
   formFields: 'formFields',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -169,6 +171,8 @@ exports.Prisma.PaymentCollectionScalarFieldEnum = {
   idclAmount: 'idclAmount',
   motAmount: 'motAmount',
   metadata: 'metadata',
+  idempotencyKey: 'idempotencyKey',
+  paymentLink: 'paymentLink',
   paymentReference: 'paymentReference',
   transactionId: 'transactionId',
   paymentStatus: 'paymentStatus',

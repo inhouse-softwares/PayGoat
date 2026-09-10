@@ -140,7 +140,7 @@ export function OperatorDashboardClient() {
             <Building2 size={14} />
             <span>{instance.name}</span>
             <span className="opacity-50">·</span>
-            <span className="font-mono text-xs">{instance.splitCode}</span>
+            <span className="text-xs">{instance.paymentGateway === "myimopay" ? "MyIMO Pay" : "Paystack"}</span>
           </div>
           <div className="flex gap-3 mt-5">
             <Link

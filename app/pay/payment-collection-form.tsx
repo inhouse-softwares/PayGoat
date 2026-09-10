@@ -54,6 +54,7 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
   const [pollingStatus, setPollingStatus] = useState<string>("");
 
   const paymentInFlight = useRef(false);
+  const paymentIntentRef = useRef<{ idempotencyKey: string; reference: string } | null>(null);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
   const pollingStartRef = useRef<number>(0);
 
@@ -241,6 +242,7 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
             if (pollingRef.current) clearInterval(pollingRef.current);
             pollingRef.current = null;
             setPollingStatus("");
+            paymentIntentRef.current = null;
             alert("Payment was not successful. Please try again.");
             paymentInFlight.current = false;
             setIsInitiating(false);
@@ -263,17 +265,28 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
 
     if (!instance || !selectedPaymentType || totalAmount <= 0) return;
 
+    if (instance.paymentGateway !== "myimopay") {
+      alert("This payment gateway is coming soon.");
+      return;
+    }
     paymentInFlight.current = true;
     setIsInitiating(true);
 
-    const reference = `PG-${instance.id.slice(-6)}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`.toUpperCase();
-    const activeSplitCode = selectedPaymentType.splitCode || instance.splitCode;
+    // Reuse this intent after a network/UI retry. The reference is logical and
+    // exactly 20 characters: PG + YYMMDD + 12 chars from the idempotency UUID.
+    if (!paymentIntentRef.current) {
+      const idempotencyKey = crypto.randomUUID();
+      const date = new Date().toISOString().slice(2, 10).replaceAll("-", "");
+      paymentIntentRef.current = {
+        idempotencyKey,
+        reference: `PG${date}${idempotencyKey.replaceAll("-", "").slice(0, 12)}`.toUpperCase(),
+      };
+    }
+    const { idempotencyKey, reference } = paymentIntentRef.current;
     const payerEmail = persons[0].email.trim();
     const payerName = quantity === 1 ? persons[0].name.trim() : `Group of ${quantity} (${persons[0].name.trim()})`;
 
     // Pre-build receipts for when payment succeeds
-    const idclAmount = Number(((totalAmount * instance.idclPercent) / 100).toFixed(2));
-    const motAmount = Number((totalAmount - idclAmount).toFixed(2));
     const collectedAt = new Date().toLocaleString();
 
     let generatedReceipts: Receipt[];
@@ -322,16 +335,20 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
     }
 
     try {
-      const initRes = await fetch("/api/myimopay/initialize", {
+      const initRes = await fetch("/api/payments/initialize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          tx_ref: reference,
-          amount: totalAmount,
-          currency: "NGN",
+          instanceId: instance.id,
+          paymentTypeId: selectedPaymentType.id,
+          quantity,
+          payer: payerName,
           customer_full_name: payerName,
           customer_email: payerEmail || undefined,
-          settlement_order_id: activeSplitCode && activeSplitCode.startsWith("no-split") ? undefined : activeSplitCode,
+          metadata: { persons: persons.map((p) => ({ name: p.name, email: p.email, ...p.fields })) },
+          collectedAt,
+          idempotencyKey,
+          paymentReference: reference,
         }),
       });
 
@@ -348,7 +365,7 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
       }
 
       // Open payment link in a new tab
-      const paymentWindow = window.open(paymentLink, "_blank");
+      window.open(paymentLink, "_blank");
 
       // Start polling for payment status
       startPolling(reference, generatedReceipts);
@@ -359,20 +376,7 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
           const verifyRes = await fetch(`/api/myimopay/verify/${encodeURIComponent(reference)}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              instanceId: instance.id,
-              instanceName: instance.name,
-              splitCode: activeSplitCode,
-              paymentTypeId: selectedPaymentType.id,
-              paymentType: selectedPaymentType.name,
-              payer: payerName,
-              amount: totalAmount,
-              quantity,
-              idclAmount,
-              motAmount,
-              metadata: { persons: persons.map((p) => ({ name: p.name, email: p.email, ...p.fields })) },
-              collectedAt,
-            }),
+            body: JSON.stringify({}),
           });
 
           if (verifyRes.ok) {
@@ -413,6 +417,7 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
     setBulkReceiptCount(1);
     setReceipts([]);
     setPollingStatus("");
+    paymentIntentRef.current = null;
   }
 
   if (instanceLoading) {
@@ -537,7 +542,7 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
             <Link href="/dashboard" className="text-sm font-medium text-[var(--accent)]">- Back to dashboard</Link>
             <h1 className="mt-1 text-xl font-semibold text-[var(--foreground)] sm:text-2xl">{instance.name}</h1>
           </div>
-          <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--accent)] truncate max-w-[160px] sm:max-w-none">{instance.splitCode}</span>
+          <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--accent)]">{instance.paymentGateway === "myimopay" ? "MyIMO Pay" : "Paystack"}</span>
         </div>
 
         <div className="mt-5 space-y-4">

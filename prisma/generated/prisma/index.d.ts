@@ -2333,6 +2333,7 @@ export namespace Prisma {
     splitCode: string | null
     idclPercent: number | null
     summary: string | null
+    paymentGateway: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -2343,6 +2344,7 @@ export namespace Prisma {
     splitCode: string | null
     idclPercent: number | null
     summary: string | null
+    paymentGateway: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -2354,6 +2356,8 @@ export namespace Prisma {
     idclPercent: number
     summary: number
     entities: number
+    paymentGateway: number
+    gatewayConfig: number
     formFields: number
     createdAt: number
     updatedAt: number
@@ -2375,6 +2379,7 @@ export namespace Prisma {
     splitCode?: true
     idclPercent?: true
     summary?: true
+    paymentGateway?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -2385,6 +2390,7 @@ export namespace Prisma {
     splitCode?: true
     idclPercent?: true
     summary?: true
+    paymentGateway?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -2396,6 +2402,8 @@ export namespace Prisma {
     idclPercent?: true
     summary?: true
     entities?: true
+    paymentGateway?: true
+    gatewayConfig?: true
     formFields?: true
     createdAt?: true
     updatedAt?: true
@@ -2495,6 +2503,8 @@ export namespace Prisma {
     idclPercent: number
     summary: string
     entities: JsonValue
+    paymentGateway: string
+    gatewayConfig: JsonValue
     formFields: JsonValue
     createdAt: Date
     updatedAt: Date
@@ -2526,6 +2536,8 @@ export namespace Prisma {
     idclPercent?: boolean
     summary?: boolean
     entities?: boolean
+    paymentGateway?: boolean
+    gatewayConfig?: boolean
     formFields?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -2542,6 +2554,8 @@ export namespace Prisma {
     idclPercent?: boolean
     summary?: boolean
     entities?: boolean
+    paymentGateway?: boolean
+    gatewayConfig?: boolean
     formFields?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -2554,6 +2568,8 @@ export namespace Prisma {
     idclPercent?: boolean
     summary?: boolean
     entities?: boolean
+    paymentGateway?: boolean
+    gatewayConfig?: boolean
     formFields?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -2566,12 +2582,14 @@ export namespace Prisma {
     idclPercent?: boolean
     summary?: boolean
     entities?: boolean
+    paymentGateway?: boolean
+    gatewayConfig?: boolean
     formFields?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type PaymentInstanceOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "splitCode" | "idclPercent" | "summary" | "entities" | "formFields" | "createdAt" | "updatedAt", ExtArgs["result"]["paymentInstance"]>
+  export type PaymentInstanceOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "splitCode" | "idclPercent" | "summary" | "entities" | "paymentGateway" | "gatewayConfig" | "formFields" | "createdAt" | "updatedAt", ExtArgs["result"]["paymentInstance"]>
   export type PaymentInstanceInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     collections?: boolean | PaymentInstance$collectionsArgs<ExtArgs>
     paymentTypes?: boolean | PaymentInstance$paymentTypesArgs<ExtArgs>
@@ -2595,6 +2613,8 @@ export namespace Prisma {
       idclPercent: number
       summary: string
       entities: Prisma.JsonValue
+      paymentGateway: string
+      gatewayConfig: Prisma.JsonValue
       formFields: Prisma.JsonValue
       createdAt: Date
       updatedAt: Date
@@ -3030,6 +3050,8 @@ export namespace Prisma {
     readonly idclPercent: FieldRef<"PaymentInstance", 'Float'>
     readonly summary: FieldRef<"PaymentInstance", 'String'>
     readonly entities: FieldRef<"PaymentInstance", 'Json'>
+    readonly paymentGateway: FieldRef<"PaymentInstance", 'String'>
+    readonly gatewayConfig: FieldRef<"PaymentInstance", 'Json'>
     readonly formFields: FieldRef<"PaymentInstance", 'Json'>
     readonly createdAt: FieldRef<"PaymentInstance", 'DateTime'>
     readonly updatedAt: FieldRef<"PaymentInstance", 'DateTime'>
@@ -4684,6 +4706,8 @@ export namespace Prisma {
     quantity: number | null
     idclAmount: number | null
     motAmount: number | null
+    idempotencyKey: string | null
+    paymentLink: string | null
     paymentReference: string | null
     transactionId: string | null
     paymentStatus: string | null
@@ -4703,6 +4727,8 @@ export namespace Prisma {
     quantity: number | null
     idclAmount: number | null
     motAmount: number | null
+    idempotencyKey: string | null
+    paymentLink: string | null
     paymentReference: string | null
     transactionId: string | null
     paymentStatus: string | null
@@ -4723,6 +4749,8 @@ export namespace Prisma {
     idclAmount: number
     motAmount: number
     metadata: number
+    idempotencyKey: number
+    paymentLink: number
     paymentReference: number
     transactionId: number
     paymentStatus: number
@@ -4758,6 +4786,8 @@ export namespace Prisma {
     quantity?: true
     idclAmount?: true
     motAmount?: true
+    idempotencyKey?: true
+    paymentLink?: true
     paymentReference?: true
     transactionId?: true
     paymentStatus?: true
@@ -4777,6 +4807,8 @@ export namespace Prisma {
     quantity?: true
     idclAmount?: true
     motAmount?: true
+    idempotencyKey?: true
+    paymentLink?: true
     paymentReference?: true
     transactionId?: true
     paymentStatus?: true
@@ -4797,6 +4829,8 @@ export namespace Prisma {
     idclAmount?: true
     motAmount?: true
     metadata?: true
+    idempotencyKey?: true
+    paymentLink?: true
     paymentReference?: true
     transactionId?: true
     paymentStatus?: true
@@ -4904,6 +4938,8 @@ export namespace Prisma {
     idclAmount: number
     motAmount: number
     metadata: JsonValue
+    idempotencyKey: string | null
+    paymentLink: string | null
     paymentReference: string | null
     transactionId: string | null
     paymentStatus: string
@@ -4943,6 +4979,8 @@ export namespace Prisma {
     idclAmount?: boolean
     motAmount?: boolean
     metadata?: boolean
+    idempotencyKey?: boolean
+    paymentLink?: boolean
     paymentReference?: boolean
     transactionId?: boolean
     paymentStatus?: boolean
@@ -4964,6 +5002,8 @@ export namespace Prisma {
     idclAmount?: boolean
     motAmount?: boolean
     metadata?: boolean
+    idempotencyKey?: boolean
+    paymentLink?: boolean
     paymentReference?: boolean
     transactionId?: boolean
     paymentStatus?: boolean
@@ -4985,6 +5025,8 @@ export namespace Prisma {
     idclAmount?: boolean
     motAmount?: boolean
     metadata?: boolean
+    idempotencyKey?: boolean
+    paymentLink?: boolean
     paymentReference?: boolean
     transactionId?: boolean
     paymentStatus?: boolean
@@ -5006,6 +5048,8 @@ export namespace Prisma {
     idclAmount?: boolean
     motAmount?: boolean
     metadata?: boolean
+    idempotencyKey?: boolean
+    paymentLink?: boolean
     paymentReference?: boolean
     transactionId?: boolean
     paymentStatus?: boolean
@@ -5013,7 +5057,7 @@ export namespace Prisma {
     createdAt?: boolean
   }
 
-  export type PaymentCollectionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "instanceId" | "instanceName" | "splitCode" | "paymentTypeId" | "paymentType" | "payer" | "amount" | "quantity" | "idclAmount" | "motAmount" | "metadata" | "paymentReference" | "transactionId" | "paymentStatus" | "collectedAt" | "createdAt", ExtArgs["result"]["paymentCollection"]>
+  export type PaymentCollectionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "instanceId" | "instanceName" | "splitCode" | "paymentTypeId" | "paymentType" | "payer" | "amount" | "quantity" | "idclAmount" | "motAmount" | "metadata" | "idempotencyKey" | "paymentLink" | "paymentReference" | "transactionId" | "paymentStatus" | "collectedAt" | "createdAt", ExtArgs["result"]["paymentCollection"]>
   export type PaymentCollectionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     instance?: boolean | PaymentInstanceDefaultArgs<ExtArgs>
   }
@@ -5042,6 +5086,8 @@ export namespace Prisma {
       idclAmount: number
       motAmount: number
       metadata: Prisma.JsonValue
+      idempotencyKey: string | null
+      paymentLink: string | null
       paymentReference: string | null
       transactionId: string | null
       paymentStatus: string
@@ -5483,6 +5529,8 @@ export namespace Prisma {
     readonly idclAmount: FieldRef<"PaymentCollection", 'Float'>
     readonly motAmount: FieldRef<"PaymentCollection", 'Float'>
     readonly metadata: FieldRef<"PaymentCollection", 'Json'>
+    readonly idempotencyKey: FieldRef<"PaymentCollection", 'String'>
+    readonly paymentLink: FieldRef<"PaymentCollection", 'String'>
     readonly paymentReference: FieldRef<"PaymentCollection", 'String'>
     readonly transactionId: FieldRef<"PaymentCollection", 'String'>
     readonly paymentStatus: FieldRef<"PaymentCollection", 'String'>
@@ -5938,6 +5986,8 @@ export namespace Prisma {
     idclPercent: 'idclPercent',
     summary: 'summary',
     entities: 'entities',
+    paymentGateway: 'paymentGateway',
+    gatewayConfig: 'gatewayConfig',
     formFields: 'formFields',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -5974,6 +6024,8 @@ export namespace Prisma {
     idclAmount: 'idclAmount',
     motAmount: 'motAmount',
     metadata: 'metadata',
+    idempotencyKey: 'idempotencyKey',
+    paymentLink: 'paymentLink',
     paymentReference: 'paymentReference',
     transactionId: 'transactionId',
     paymentStatus: 'paymentStatus',
@@ -6187,6 +6239,8 @@ export namespace Prisma {
     idclPercent?: FloatFilter<"PaymentInstance"> | number
     summary?: StringFilter<"PaymentInstance"> | string
     entities?: JsonFilter<"PaymentInstance">
+    paymentGateway?: StringFilter<"PaymentInstance"> | string
+    gatewayConfig?: JsonFilter<"PaymentInstance">
     formFields?: JsonFilter<"PaymentInstance">
     createdAt?: DateTimeFilter<"PaymentInstance"> | Date | string
     updatedAt?: DateTimeFilter<"PaymentInstance"> | Date | string
@@ -6202,6 +6256,8 @@ export namespace Prisma {
     idclPercent?: SortOrder
     summary?: SortOrder
     entities?: SortOrder
+    paymentGateway?: SortOrder
+    gatewayConfig?: SortOrder
     formFields?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -6220,6 +6276,8 @@ export namespace Prisma {
     idclPercent?: FloatFilter<"PaymentInstance"> | number
     summary?: StringFilter<"PaymentInstance"> | string
     entities?: JsonFilter<"PaymentInstance">
+    paymentGateway?: StringFilter<"PaymentInstance"> | string
+    gatewayConfig?: JsonFilter<"PaymentInstance">
     formFields?: JsonFilter<"PaymentInstance">
     createdAt?: DateTimeFilter<"PaymentInstance"> | Date | string
     updatedAt?: DateTimeFilter<"PaymentInstance"> | Date | string
@@ -6235,6 +6293,8 @@ export namespace Prisma {
     idclPercent?: SortOrder
     summary?: SortOrder
     entities?: SortOrder
+    paymentGateway?: SortOrder
+    gatewayConfig?: SortOrder
     formFields?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -6255,6 +6315,8 @@ export namespace Prisma {
     idclPercent?: FloatWithAggregatesFilter<"PaymentInstance"> | number
     summary?: StringWithAggregatesFilter<"PaymentInstance"> | string
     entities?: JsonWithAggregatesFilter<"PaymentInstance">
+    paymentGateway?: StringWithAggregatesFilter<"PaymentInstance"> | string
+    gatewayConfig?: JsonWithAggregatesFilter<"PaymentInstance">
     formFields?: JsonWithAggregatesFilter<"PaymentInstance">
     createdAt?: DateTimeWithAggregatesFilter<"PaymentInstance"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"PaymentInstance"> | Date | string
@@ -6353,6 +6415,8 @@ export namespace Prisma {
     idclAmount?: FloatFilter<"PaymentCollection"> | number
     motAmount?: FloatFilter<"PaymentCollection"> | number
     metadata?: JsonFilter<"PaymentCollection">
+    idempotencyKey?: StringNullableFilter<"PaymentCollection"> | string | null
+    paymentLink?: StringNullableFilter<"PaymentCollection"> | string | null
     paymentReference?: StringNullableFilter<"PaymentCollection"> | string | null
     transactionId?: StringNullableFilter<"PaymentCollection"> | string | null
     paymentStatus?: StringFilter<"PaymentCollection"> | string
@@ -6374,6 +6438,8 @@ export namespace Prisma {
     idclAmount?: SortOrder
     motAmount?: SortOrder
     metadata?: SortOrder
+    idempotencyKey?: SortOrderInput | SortOrder
+    paymentLink?: SortOrderInput | SortOrder
     paymentReference?: SortOrderInput | SortOrder
     transactionId?: SortOrderInput | SortOrder
     paymentStatus?: SortOrder
@@ -6384,6 +6450,7 @@ export namespace Prisma {
 
   export type PaymentCollectionWhereUniqueInput = Prisma.AtLeast<{
     id?: string
+    idempotencyKey?: string
     paymentReference?: string
     transactionId?: string
     AND?: PaymentCollectionWhereInput | PaymentCollectionWhereInput[]
@@ -6400,11 +6467,12 @@ export namespace Prisma {
     idclAmount?: FloatFilter<"PaymentCollection"> | number
     motAmount?: FloatFilter<"PaymentCollection"> | number
     metadata?: JsonFilter<"PaymentCollection">
+    paymentLink?: StringNullableFilter<"PaymentCollection"> | string | null
     paymentStatus?: StringFilter<"PaymentCollection"> | string
     collectedAt?: StringFilter<"PaymentCollection"> | string
     createdAt?: DateTimeFilter<"PaymentCollection"> | Date | string
     instance?: XOR<PaymentInstanceScalarRelationFilter, PaymentInstanceWhereInput>
-  }, "id" | "paymentReference" | "transactionId">
+  }, "id" | "idempotencyKey" | "paymentReference" | "transactionId">
 
   export type PaymentCollectionOrderByWithAggregationInput = {
     id?: SortOrder
@@ -6419,6 +6487,8 @@ export namespace Prisma {
     idclAmount?: SortOrder
     motAmount?: SortOrder
     metadata?: SortOrder
+    idempotencyKey?: SortOrderInput | SortOrder
+    paymentLink?: SortOrderInput | SortOrder
     paymentReference?: SortOrderInput | SortOrder
     transactionId?: SortOrderInput | SortOrder
     paymentStatus?: SortOrder
@@ -6447,6 +6517,8 @@ export namespace Prisma {
     idclAmount?: FloatWithAggregatesFilter<"PaymentCollection"> | number
     motAmount?: FloatWithAggregatesFilter<"PaymentCollection"> | number
     metadata?: JsonWithAggregatesFilter<"PaymentCollection">
+    idempotencyKey?: StringNullableWithAggregatesFilter<"PaymentCollection"> | string | null
+    paymentLink?: StringNullableWithAggregatesFilter<"PaymentCollection"> | string | null
     paymentReference?: StringNullableWithAggregatesFilter<"PaymentCollection"> | string | null
     transactionId?: StringNullableWithAggregatesFilter<"PaymentCollection"> | string | null
     paymentStatus?: StringWithAggregatesFilter<"PaymentCollection"> | string
@@ -6544,6 +6616,8 @@ export namespace Prisma {
     idclPercent: number
     summary: string
     entities: JsonNullValueInput | InputJsonValue
+    paymentGateway?: string
+    gatewayConfig?: JsonNullValueInput | InputJsonValue
     formFields?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -6559,6 +6633,8 @@ export namespace Prisma {
     idclPercent: number
     summary: string
     entities: JsonNullValueInput | InputJsonValue
+    paymentGateway?: string
+    gatewayConfig?: JsonNullValueInput | InputJsonValue
     formFields?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -6574,6 +6650,8 @@ export namespace Prisma {
     idclPercent?: FloatFieldUpdateOperationsInput | number
     summary?: StringFieldUpdateOperationsInput | string
     entities?: JsonNullValueInput | InputJsonValue
+    paymentGateway?: StringFieldUpdateOperationsInput | string
+    gatewayConfig?: JsonNullValueInput | InputJsonValue
     formFields?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -6589,6 +6667,8 @@ export namespace Prisma {
     idclPercent?: FloatFieldUpdateOperationsInput | number
     summary?: StringFieldUpdateOperationsInput | string
     entities?: JsonNullValueInput | InputJsonValue
+    paymentGateway?: StringFieldUpdateOperationsInput | string
+    gatewayConfig?: JsonNullValueInput | InputJsonValue
     formFields?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -6604,6 +6684,8 @@ export namespace Prisma {
     idclPercent: number
     summary: string
     entities: JsonNullValueInput | InputJsonValue
+    paymentGateway?: string
+    gatewayConfig?: JsonNullValueInput | InputJsonValue
     formFields?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -6616,6 +6698,8 @@ export namespace Prisma {
     idclPercent?: FloatFieldUpdateOperationsInput | number
     summary?: StringFieldUpdateOperationsInput | string
     entities?: JsonNullValueInput | InputJsonValue
+    paymentGateway?: StringFieldUpdateOperationsInput | string
+    gatewayConfig?: JsonNullValueInput | InputJsonValue
     formFields?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -6628,6 +6712,8 @@ export namespace Prisma {
     idclPercent?: FloatFieldUpdateOperationsInput | number
     summary?: StringFieldUpdateOperationsInput | string
     entities?: JsonNullValueInput | InputJsonValue
+    paymentGateway?: StringFieldUpdateOperationsInput | string
+    gatewayConfig?: JsonNullValueInput | InputJsonValue
     formFields?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -6728,6 +6814,8 @@ export namespace Prisma {
     idclAmount: number
     motAmount: number
     metadata?: JsonNullValueInput | InputJsonValue
+    idempotencyKey?: string | null
+    paymentLink?: string | null
     paymentReference?: string | null
     transactionId?: string | null
     paymentStatus?: string
@@ -6749,6 +6837,8 @@ export namespace Prisma {
     idclAmount: number
     motAmount: number
     metadata?: JsonNullValueInput | InputJsonValue
+    idempotencyKey?: string | null
+    paymentLink?: string | null
     paymentReference?: string | null
     transactionId?: string | null
     paymentStatus?: string
@@ -6768,6 +6858,8 @@ export namespace Prisma {
     idclAmount?: FloatFieldUpdateOperationsInput | number
     motAmount?: FloatFieldUpdateOperationsInput | number
     metadata?: JsonNullValueInput | InputJsonValue
+    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentLink?: NullableStringFieldUpdateOperationsInput | string | null
     paymentReference?: NullableStringFieldUpdateOperationsInput | string | null
     transactionId?: NullableStringFieldUpdateOperationsInput | string | null
     paymentStatus?: StringFieldUpdateOperationsInput | string
@@ -6789,6 +6881,8 @@ export namespace Prisma {
     idclAmount?: FloatFieldUpdateOperationsInput | number
     motAmount?: FloatFieldUpdateOperationsInput | number
     metadata?: JsonNullValueInput | InputJsonValue
+    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentLink?: NullableStringFieldUpdateOperationsInput | string | null
     paymentReference?: NullableStringFieldUpdateOperationsInput | string | null
     transactionId?: NullableStringFieldUpdateOperationsInput | string | null
     paymentStatus?: StringFieldUpdateOperationsInput | string
@@ -6809,6 +6903,8 @@ export namespace Prisma {
     idclAmount: number
     motAmount: number
     metadata?: JsonNullValueInput | InputJsonValue
+    idempotencyKey?: string | null
+    paymentLink?: string | null
     paymentReference?: string | null
     transactionId?: string | null
     paymentStatus?: string
@@ -6828,6 +6924,8 @@ export namespace Prisma {
     idclAmount?: FloatFieldUpdateOperationsInput | number
     motAmount?: FloatFieldUpdateOperationsInput | number
     metadata?: JsonNullValueInput | InputJsonValue
+    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentLink?: NullableStringFieldUpdateOperationsInput | string | null
     paymentReference?: NullableStringFieldUpdateOperationsInput | string | null
     transactionId?: NullableStringFieldUpdateOperationsInput | string | null
     paymentStatus?: StringFieldUpdateOperationsInput | string
@@ -6848,6 +6946,8 @@ export namespace Prisma {
     idclAmount?: FloatFieldUpdateOperationsInput | number
     motAmount?: FloatFieldUpdateOperationsInput | number
     metadata?: JsonNullValueInput | InputJsonValue
+    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentLink?: NullableStringFieldUpdateOperationsInput | string | null
     paymentReference?: NullableStringFieldUpdateOperationsInput | string | null
     transactionId?: NullableStringFieldUpdateOperationsInput | string | null
     paymentStatus?: StringFieldUpdateOperationsInput | string
@@ -7083,6 +7183,8 @@ export namespace Prisma {
     idclPercent?: SortOrder
     summary?: SortOrder
     entities?: SortOrder
+    paymentGateway?: SortOrder
+    gatewayConfig?: SortOrder
     formFields?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -7098,6 +7200,7 @@ export namespace Prisma {
     splitCode?: SortOrder
     idclPercent?: SortOrder
     summary?: SortOrder
+    paymentGateway?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -7108,6 +7211,7 @@ export namespace Prisma {
     splitCode?: SortOrder
     idclPercent?: SortOrder
     summary?: SortOrder
+    paymentGateway?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -7229,6 +7333,8 @@ export namespace Prisma {
     idclAmount?: SortOrder
     motAmount?: SortOrder
     metadata?: SortOrder
+    idempotencyKey?: SortOrder
+    paymentLink?: SortOrder
     paymentReference?: SortOrder
     transactionId?: SortOrder
     paymentStatus?: SortOrder
@@ -7255,6 +7361,8 @@ export namespace Prisma {
     quantity?: SortOrder
     idclAmount?: SortOrder
     motAmount?: SortOrder
+    idempotencyKey?: SortOrder
+    paymentLink?: SortOrder
     paymentReference?: SortOrder
     transactionId?: SortOrder
     paymentStatus?: SortOrder
@@ -7274,6 +7382,8 @@ export namespace Prisma {
     quantity?: SortOrder
     idclAmount?: SortOrder
     motAmount?: SortOrder
+    idempotencyKey?: SortOrder
+    paymentLink?: SortOrder
     paymentReference?: SortOrder
     transactionId?: SortOrder
     paymentStatus?: SortOrder
@@ -7703,6 +7813,8 @@ export namespace Prisma {
     idclPercent: number
     summary: string
     entities: JsonNullValueInput | InputJsonValue
+    paymentGateway?: string
+    gatewayConfig?: JsonNullValueInput | InputJsonValue
     formFields?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -7717,6 +7829,8 @@ export namespace Prisma {
     idclPercent: number
     summary: string
     entities: JsonNullValueInput | InputJsonValue
+    paymentGateway?: string
+    gatewayConfig?: JsonNullValueInput | InputJsonValue
     formFields?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -7747,6 +7861,8 @@ export namespace Prisma {
     idclPercent?: FloatFieldUpdateOperationsInput | number
     summary?: StringFieldUpdateOperationsInput | string
     entities?: JsonNullValueInput | InputJsonValue
+    paymentGateway?: StringFieldUpdateOperationsInput | string
+    gatewayConfig?: JsonNullValueInput | InputJsonValue
     formFields?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -7761,6 +7877,8 @@ export namespace Prisma {
     idclPercent?: FloatFieldUpdateOperationsInput | number
     summary?: StringFieldUpdateOperationsInput | string
     entities?: JsonNullValueInput | InputJsonValue
+    paymentGateway?: StringFieldUpdateOperationsInput | string
+    gatewayConfig?: JsonNullValueInput | InputJsonValue
     formFields?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -7780,6 +7898,8 @@ export namespace Prisma {
     idclAmount: number
     motAmount: number
     metadata?: JsonNullValueInput | InputJsonValue
+    idempotencyKey?: string | null
+    paymentLink?: string | null
     paymentReference?: string | null
     transactionId?: string | null
     paymentStatus?: string
@@ -7799,6 +7919,8 @@ export namespace Prisma {
     idclAmount: number
     motAmount: number
     metadata?: JsonNullValueInput | InputJsonValue
+    idempotencyKey?: string | null
+    paymentLink?: string | null
     paymentReference?: string | null
     transactionId?: string | null
     paymentStatus?: string
@@ -7907,6 +8029,8 @@ export namespace Prisma {
     idclAmount?: FloatFilter<"PaymentCollection"> | number
     motAmount?: FloatFilter<"PaymentCollection"> | number
     metadata?: JsonFilter<"PaymentCollection">
+    idempotencyKey?: StringNullableFilter<"PaymentCollection"> | string | null
+    paymentLink?: StringNullableFilter<"PaymentCollection"> | string | null
     paymentReference?: StringNullableFilter<"PaymentCollection"> | string | null
     transactionId?: StringNullableFilter<"PaymentCollection"> | string | null
     paymentStatus?: StringFilter<"PaymentCollection"> | string
@@ -7985,6 +8109,8 @@ export namespace Prisma {
     idclPercent: number
     summary: string
     entities: JsonNullValueInput | InputJsonValue
+    paymentGateway?: string
+    gatewayConfig?: JsonNullValueInput | InputJsonValue
     formFields?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -7999,6 +8125,8 @@ export namespace Prisma {
     idclPercent: number
     summary: string
     entities: JsonNullValueInput | InputJsonValue
+    paymentGateway?: string
+    gatewayConfig?: JsonNullValueInput | InputJsonValue
     formFields?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -8029,6 +8157,8 @@ export namespace Prisma {
     idclPercent?: FloatFieldUpdateOperationsInput | number
     summary?: StringFieldUpdateOperationsInput | string
     entities?: JsonNullValueInput | InputJsonValue
+    paymentGateway?: StringFieldUpdateOperationsInput | string
+    gatewayConfig?: JsonNullValueInput | InputJsonValue
     formFields?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -8043,6 +8173,8 @@ export namespace Prisma {
     idclPercent?: FloatFieldUpdateOperationsInput | number
     summary?: StringFieldUpdateOperationsInput | string
     entities?: JsonNullValueInput | InputJsonValue
+    paymentGateway?: StringFieldUpdateOperationsInput | string
+    gatewayConfig?: JsonNullValueInput | InputJsonValue
     formFields?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -8057,6 +8189,8 @@ export namespace Prisma {
     idclPercent: number
     summary: string
     entities: JsonNullValueInput | InputJsonValue
+    paymentGateway?: string
+    gatewayConfig?: JsonNullValueInput | InputJsonValue
     formFields?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -8071,6 +8205,8 @@ export namespace Prisma {
     idclPercent: number
     summary: string
     entities: JsonNullValueInput | InputJsonValue
+    paymentGateway?: string
+    gatewayConfig?: JsonNullValueInput | InputJsonValue
     formFields?: JsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -8101,6 +8237,8 @@ export namespace Prisma {
     idclPercent?: FloatFieldUpdateOperationsInput | number
     summary?: StringFieldUpdateOperationsInput | string
     entities?: JsonNullValueInput | InputJsonValue
+    paymentGateway?: StringFieldUpdateOperationsInput | string
+    gatewayConfig?: JsonNullValueInput | InputJsonValue
     formFields?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -8115,6 +8253,8 @@ export namespace Prisma {
     idclPercent?: FloatFieldUpdateOperationsInput | number
     summary?: StringFieldUpdateOperationsInput | string
     entities?: JsonNullValueInput | InputJsonValue
+    paymentGateway?: StringFieldUpdateOperationsInput | string
+    gatewayConfig?: JsonNullValueInput | InputJsonValue
     formFields?: JsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -8134,6 +8274,8 @@ export namespace Prisma {
     idclAmount: number
     motAmount: number
     metadata?: JsonNullValueInput | InputJsonValue
+    idempotencyKey?: string | null
+    paymentLink?: string | null
     paymentReference?: string | null
     transactionId?: string | null
     paymentStatus?: string
@@ -8164,6 +8306,8 @@ export namespace Prisma {
     idclAmount?: FloatFieldUpdateOperationsInput | number
     motAmount?: FloatFieldUpdateOperationsInput | number
     metadata?: JsonNullValueInput | InputJsonValue
+    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentLink?: NullableStringFieldUpdateOperationsInput | string | null
     paymentReference?: NullableStringFieldUpdateOperationsInput | string | null
     transactionId?: NullableStringFieldUpdateOperationsInput | string | null
     paymentStatus?: StringFieldUpdateOperationsInput | string
@@ -8183,6 +8327,8 @@ export namespace Prisma {
     idclAmount?: FloatFieldUpdateOperationsInput | number
     motAmount?: FloatFieldUpdateOperationsInput | number
     metadata?: JsonNullValueInput | InputJsonValue
+    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentLink?: NullableStringFieldUpdateOperationsInput | string | null
     paymentReference?: NullableStringFieldUpdateOperationsInput | string | null
     transactionId?: NullableStringFieldUpdateOperationsInput | string | null
     paymentStatus?: StringFieldUpdateOperationsInput | string
@@ -8202,6 +8348,8 @@ export namespace Prisma {
     idclAmount?: FloatFieldUpdateOperationsInput | number
     motAmount?: FloatFieldUpdateOperationsInput | number
     metadata?: JsonNullValueInput | InputJsonValue
+    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
+    paymentLink?: NullableStringFieldUpdateOperationsInput | string | null
     paymentReference?: NullableStringFieldUpdateOperationsInput | string | null
     transactionId?: NullableStringFieldUpdateOperationsInput | string | null
     paymentStatus?: StringFieldUpdateOperationsInput | string

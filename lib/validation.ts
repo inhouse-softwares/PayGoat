@@ -29,25 +29,30 @@ export const PasswordChangeSchema = z.object({
 // PAYMENT INSTANCE SCHEMAS
 // ============================================================================
 
-export const BankEntitySchema = z.object({
-  name: z.string().min(1).max(100).trim(),
-  accountNumber: z.string().regex(/^\d{10}$/, "Account number must be exactly 10 digits"),
-  bankCode: z.string().min(1, "Bank code is required"),
-  businessName: z.string().min(1).max(200).trim(),
-  percentage: z.number().min(0).max(100, "Percentage must be between 0 and 100"),
-});
-
 export const PaymentTypeSchema = z.object({
   name: z.string().min(1).max(100).trim(),
   description: z.string().max(500).optional(),
   amount: z.number().positive("Amount must be positive"),
-  splitCode: z.string().optional(),
-  splitEntities: z.array(BankEntitySchema).optional(),
 });
+
+const MyImoPayConfigurationSchema = z.object({
+  gateway: z.literal("myimopay"),
+  config: z.object({ settlementId: z.string().uuid("Settlement ID must be a valid UUID") }),
+});
+
+const PaystackConfigurationSchema = z.object({
+  gateway: z.literal("paystack"),
+  config: z.object({}).strict(),
+});
+
+export const PaymentGatewayConfigurationSchema = z.discriminatedUnion("gateway", [
+  MyImoPayConfigurationSchema,
+  PaystackConfigurationSchema,
+]);
 
 export const FormFieldSchema = z.object({
   label: z.string().min(1).max(50).trim(),
-  type: z.enum(["text", "email", "tel", "number", "date"]),
+  type: z.enum(["text", "number", "date", "select"]),
   required: z.boolean().default(false),
 });
 
@@ -55,7 +60,7 @@ export const CreateInstanceSchema = z.object({
   name: z.string().min(1, "Name is required").max(100).trim(),
   summary: z.string().min(1, "Summary is required").max(500).trim(),
   idclPercent: z.number().min(0).max(100).default(0),
-  entities: z.array(BankEntitySchema).optional().default([]),
+  gatewayConfiguration: PaymentGatewayConfigurationSchema,
   formFields: z.array(FormFieldSchema).optional().default([]),
   paymentTypes: z.array(PaymentTypeSchema).min(1, "At least one payment type is required"),
 });

@@ -1,5 +1,14 @@
 import { baseApi } from "./baseApi";
-import type { PaymentCollection, PaymentInstance } from "@/lib/payment-store";
+import type { FormField, PaymentCollection, PaymentGatewayConfiguration, PaymentInstance } from "@/lib/payment-store";
+
+type CreateInstanceRequest = {
+  name: string;
+  summary: string;
+  idclPercent: number;
+  formFields: FormField[];
+  paymentTypes: Array<{ name: string; description?: string; amount: number }>;
+  gatewayConfiguration: PaymentGatewayConfiguration;
+};
 
 export const instancesApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -19,7 +28,7 @@ export const instancesApi = baseApi.injectEndpoints({
     }),
     createInstance: builder.mutation<
       PaymentInstance & { operatorEmail?: string; operatorPassword?: string },
-      Omit<PaymentInstance, "id" | "splitCode" | "createdAt" | "updatedAt"> & { splitCode?: string }
+      CreateInstanceRequest
     >({
       query: (body) => ({
         url: "/instances",

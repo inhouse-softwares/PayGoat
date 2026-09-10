@@ -38,12 +38,13 @@ export async function POST(
   const { txRef } = await params;
 
   try {
-    // Idempotency: return existing record if already saved for this reference
+    // A completed intent is already final. Pending intents must still be verified
+    // and promoted to success below.
     const existing = await prisma.paymentCollection.findUnique({
       where: { paymentReference: txRef },
     });
 
-    if (existing) {
+    if (existing?.paymentStatus === "success") {
       return NextResponse.json(existing);
     }
 
@@ -73,6 +74,17 @@ export async function POST(
         },
         { status: 400 },
       );
+    }
+
+    if (existing) {
+      const collection = await prisma.paymentCollection.update({
+        where: { id: existing.id },
+        data: {
+          paymentStatus: "success",
+          transactionId: transactionData.identifier || existing.transactionId,
+        },
+      });
+      return NextResponse.json(collection);
     }
 
     const body = await request.json();

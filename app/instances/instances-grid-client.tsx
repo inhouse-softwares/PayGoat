@@ -67,7 +67,7 @@ export function InstancesGridClient() {
                           {instance.name}
                         </h3>
                         <p className="text-xs text-[var(--muted-foreground)] font-mono">
-                          {instance.splitCode}
+                          {instance.paymentGateway === "myimopay" ? "MyIMO Pay" : "Paystack"}
                         </p>
                       </div>
                     </div>

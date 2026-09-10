@@ -202,7 +202,7 @@ export function DashboardClient() {
                           {instance.name}
                         </p>
                         <p className="text-xs text-[var(--muted-foreground)]">
-                          {instance.splitCode}
+                          {instance.paymentGateway === "myimopay" ? "MyIMO Pay" : "Paystack"}
                         </p>
                       </div>
                     </div>
