@@ -87,8 +87,6 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
   const handleVerifyAfterCallback = useCallback(async (txRef: string) => {
     setIsVerifying(true);
     try {
-      // We need to find the collection data from pending state or re-derive it
-      // The callback flow verifies server-side, so we just need to refetch
       const verifyRes = await fetch(`/api/myimopay/verify/${encodeURIComponent(txRef)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -98,27 +96,7 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
       if (verifyRes.ok) {
         const collection = await verifyRes.json();
         if (collection.paymentStatus === "success") {
-          const qty = collection.quantity || 1;
-          const unitAmt = collection.amount / qty;
-          const metadata = collection.metadata as PaymentCollectionMetadata;
-          const rawPersons = Array.isArray(metadata.persons)
-            ? metadata.persons
-            : [{ name: collection.payer }];
-
-          const generatedReceipts: Receipt[] = rawPersons.map((p: Record<string, string>, i: number) => ({
-            index: i,
-            name: p.name ?? collection.payer,
-            email: p.email ?? "",
-            fields: Object.fromEntries(Object.entries(p).filter(([k]) => k !== "name" && k !== "email")),
-            paymentType: collection.paymentType ?? "",
-            unitAmount: unitAmt,
-            totalAmount: collection.amount,
-            quantity: qty,
-            reference: collection.paymentReference ?? txRef,
-            collectedAt: collection.collectedAt,
-            instanceName: collection.instanceName,
-          }));
-
+          const generatedReceipts = buildReceiptsFromCollection(collection);
           setReceipts(generatedReceipts);
           setStep("receipts");
           refetchCollections();
@@ -128,7 +106,7 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
       setIsVerifying(false);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [refetchCollections]);
 
   // Cleanup polling on unmount
   useEffect(() => {
@@ -209,54 +187,8 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
     return null;
   }
 
-  function startPolling(txRef: string, generatedReceipts: Receipt[]) {
-    pollingStartRef.current = Date.now();
-    setPollingStatus("Waiting for payment confirmation...");
-
-    pollingRef.current = setInterval(async () => {
-      const elapsed = Date.now() - pollingStartRef.current;
-      if (elapsed > POLL_MAX_DURATION_MS) {
-        if (pollingRef.current) clearInterval(pollingRef.current);
-        pollingRef.current = null;
-        setPollingStatus("Payment check timed out. Please verify manually later.");
-        paymentInFlight.current = false;
-        setIsInitiating(false);
-        return;
-      }
-
-      try {
-        const res = await fetch(`/api/myimopay/pending?txRef=${encodeURIComponent(txRef)}`);
-        if (res.ok) {
-          const data = await res.json();
-          const result = data.results?.[0];
-          if (result?.status === "updated_to_success") {
-            if (pollingRef.current) clearInterval(pollingRef.current);
-            pollingRef.current = null;
-            setPollingStatus("");
-            setReceipts(generatedReceipts);
-            setStep("receipts");
-            paymentInFlight.current = false;
-            setIsInitiating(false);
-            refetchCollections();
-          } else if (result?.status === "updated_to_failed") {
-            if (pollingRef.current) clearInterval(pollingRef.current);
-            pollingRef.current = null;
-            setPollingStatus("");
-            paymentIntentRef.current = null;
-            alert("Payment was not successful. Please try again.");
-            paymentInFlight.current = false;
-            setIsInitiating(false);
-          } else {
-            const secondsLeft = Math.ceil((POLL_MAX_DURATION_MS - elapsed) / 1000);
-            setPollingStatus(`Waiting for payment confirmation... (${secondsLeft}s remaining)`);
-          }
-        }
-      } catch {
-        // Silently retry on network errors
-      }
-    }, POLL_INTERVAL_MS);
-  }
-
+  // Removed startPolling as we are now using same-tab redirect
+  
   async function handleProceedToPayment() {
     if (paymentInFlight.current) return;
 
@@ -272,8 +204,6 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
     paymentInFlight.current = true;
     setIsInitiating(true);
 
-    // Reuse this intent after a network/UI retry. The reference is logical and
-    // exactly 20 characters: PG + YYMMDD + 12 chars from the idempotency UUID.
     if (!paymentIntentRef.current) {
       const idempotencyKey = crypto.randomUUID();
       const date = new Date().toISOString().slice(2, 10).replaceAll("-", "");
@@ -286,53 +216,7 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
     const payerEmail = persons[0].email.trim();
     const payerName = quantity === 1 ? persons[0].name.trim() : `Group of ${quantity} (${persons[0].name.trim()})`;
 
-    // Pre-build receipts for when payment succeeds
     const collectedAt = new Date().toLocaleString();
-
-    let generatedReceipts: Receipt[];
-    if (receiptMode === "single") {
-      generatedReceipts = [{
-        index: 0,
-        name: persons[0].name,
-        email: persons[0].email,
-        fields: persons[0].fields,
-        paymentType: selectedPaymentType.name,
-        unitAmount: totalAmount,
-        totalAmount,
-        quantity,
-        reference,
-        collectedAt,
-        instanceName: instance.name,
-      }];
-    } else if (receiptMode === "bulk") {
-      generatedReceipts = Array.from({ length: bulkReceiptCount }, (_, i) => ({
-        index: i,
-        name: persons[0].name,
-        email: persons[0].email,
-        fields: persons[0].fields,
-        paymentType: selectedPaymentType.name,
-        unitAmount,
-        totalAmount,
-        quantity,
-        reference,
-        collectedAt,
-        instanceName: instance.name,
-      }));
-    } else {
-      generatedReceipts = persons.map((p, i) => ({
-        index: i,
-        name: p.name,
-        email: p.email,
-        fields: p.fields,
-        paymentType: selectedPaymentType.name,
-        unitAmount,
-        totalAmount,
-        quantity,
-        reference,
-        collectedAt,
-        instanceName: instance.name,
-      }));
-    }
 
     try {
       const initRes = await fetch("/api/payments/initialize", {
@@ -364,38 +248,8 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
         throw new Error("No payment link received from MyIMO Pay");
       }
 
-      // Open payment link in a new tab
-      window.open(paymentLink, "_blank");
-
-      // Start polling for payment status
-      startPolling(reference, generatedReceipts);
-
-      // Also try direct verify after a short delay (for quick completions)
-      setTimeout(async () => {
-        try {
-          const verifyRes = await fetch(`/api/myimopay/verify/${encodeURIComponent(reference)}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({}),
-          });
-
-          if (verifyRes.ok) {
-            const collection = await verifyRes.json();
-            if (collection.paymentStatus === "success") {
-              if (pollingRef.current) clearInterval(pollingRef.current);
-              pollingRef.current = null;
-              setPollingStatus("");
-              setReceipts(generatedReceipts);
-              setStep("receipts");
-              paymentInFlight.current = false;
-              setIsInitiating(false);
-              refetchCollections();
-            }
-          }
-        } catch {
-          // Polling will continue
-        }
-      }, 3000);
+      // Redirect in same tab
+      window.location.href = paymentLink;
 
     } catch (err: unknown) {
       const error = err as { message?: string };
@@ -913,7 +767,7 @@ export function PaymentCollectionForm({ instanceId }: { instanceId: string }) {
               </div>
               <div className="flex items-center gap-2 text-xs text-[var(--muted-foreground)]">
                 <div className="h-1.5 w-1.5 rounded-full bg-[var(--accent)] animate-pulse"></div>
-                <span>Payment link opened in new tab</span>
+                <span>Redirecting to payment gateway...</span>
               </div>
             </div>
           </div>

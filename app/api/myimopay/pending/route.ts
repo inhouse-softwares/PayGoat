@@ -1,21 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { MyIMOPayTransactionData, isNetworkError } from "@/lib/payment-store";
-
-const MYIMOPAY_API_URL = process.env.MYIMOPAY_API_URL || "https://apipg.demo.myimopay.com";
-const MYIMOPAY_API_KEY = process.env.MYIMOPAY_API_KEY;
-
-async function checkTransactionStatus(txRef: string): Promise<MyIMOPayTransactionData> {
-  if (!MYIMOPAY_API_KEY) throw new Error("MyIMO Pay not configured");
-
-  const res = await fetch(`${MYIMOPAY_API_URL}/vi/pay/verify/${encodeURIComponent(txRef)}`, {
-    headers: { "xp-key": MYIMOPAY_API_KEY },
-  });
-
-  const data = await res.json();
-  if (!data.header?.is_success) throw new Error(data.header?.remark || "Verification failed");
-  return data.data;
-}
+import { verifyWithGateway, isTransactionSuccessful, isTransactionFailed, updatePaymentStatus } from "@/lib/payment-verify";
+import { isNetworkError } from "@/lib/payment-store";
 
 /**
  * GET /api/myimopay/pending
@@ -28,10 +14,6 @@ async function checkTransactionStatus(txRef: string): Promise<MyIMOPayTransactio
  *   ?all=true   - Check all pending transactions (batch mode)
  */
 export async function GET(request: NextRequest) {
-  if (!MYIMOPAY_API_KEY) {
-    return NextResponse.json({ error: "MyIMO Pay not configured" }, { status: 500 });
-  }
-
   const { searchParams } = request.nextUrl;
   const txRef = searchParams.get("txRef");
   const checkAll = searchParams.get("all") === "true";
@@ -47,17 +29,15 @@ export async function GET(request: NextRequest) {
     let pendingCollections;
 
     if (txRef) {
-      // Check specific transaction
       const collection = await prisma.paymentCollection.findUnique({
         where: { paymentReference: txRef },
       });
       pendingCollections = collection ? [collection] : [];
     } else {
-      // Check all pending transactions
       pendingCollections = await prisma.paymentCollection.findMany({
         where: { paymentStatus: "pending" },
         orderBy: { createdAt: "asc" },
-        take: 100, // Batch limit
+        take: 100,
       });
     }
 
@@ -70,25 +50,16 @@ export async function GET(request: NextRequest) {
       if (!reference) continue;
 
       try {
-        const txData = await checkTransactionStatus(reference);
-        const isSuccess = txData.status === 1 || txData.status === "1";
-        const isFailed = txData.status === 2 || txData.status === "2" || txData.status === 3 || txData.status === "3";
+        const txData = await verifyWithGateway(reference);
+        const isSuccess = isTransactionSuccessful(txData);
+        const isFailed = isTransactionFailed(txData);
 
         if (isSuccess) {
-          await prisma.paymentCollection.update({
-            where: { id: collection.id },
-            data: {
-              paymentStatus: "success",
-              transactionId: txData.identifier || collection.transactionId,
-            },
-          });
+          await updatePaymentStatus(reference, "success", txData.identifier);
           updatedCount++;
           results.push({ reference, status: "updated_to_success" });
         } else if (isFailed) {
-          await prisma.paymentCollection.update({
-            where: { id: collection.id },
-            data: { paymentStatus: "failed" },
-          });
+          await updatePaymentStatus(reference, "failed");
           failedCount++;
           results.push({ reference, status: "updated_to_failed" });
         } else {
